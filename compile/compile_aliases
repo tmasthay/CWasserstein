@@ -1,0 +1,2 @@
+alias ot='cp $FOMEL/ot.c $MAD_COMPILE; cd $MAD_COMPILE; scons; cp $MAD_COMPILE/ot.exe $FOMEL; cd $FOMEL'
+alias el='cp $FOMEL/myelastic. $MAD_COMPILE; cd $MAD_COMPILE; scons; cp $MAD_COMPILE/myelastic.exe $FOMEL; cd $FOMEL' 
