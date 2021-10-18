@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 from forward import forward
-import renormalize as rn
 from scipy.optimize import minimize
 import copy
 from seqflow import *
