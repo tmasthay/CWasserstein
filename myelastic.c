@@ -229,7 +229,7 @@ int main(int argc, char* argv[])
     sf_putint(Fwavx, "n2", nx);
     sf_putint(Fwavx, "n3", nt);
 
-    fprintf(stderr, "(YOnz,nx,nt) = (%d,%d,%d)\n", nz, nx, nt);
+    // fprintf(stderr, "(YOnz,nx,nt) = (%d,%d,%d)\n", nz, nx, nt);
     
     nzpad=nz+2*nb;
     nxpad=nx+2*nb;	
@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
     szs = (int) ( ((float) nzpad) * sszf );
     dzs = (int) ( ((float) nzpad) * (eszf - sszf) / (float) (nzf - 1) );
     
-    fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
+    // fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
 
     /* allocate memory for variables */
     wlt=sf_floatalloc(nt);
@@ -292,11 +292,9 @@ int main(int argc, char* argv[])
     {
         for(isx = 0; isx < nxf; isx++){
             for(isz = 0; isz < nzf; isz++ ){
-                fprintf(stderr, "YO\n");
                 sx =  sxs + isx * dxs;
                 sz = szs + isz * dzs;
-                fprintf(stderr, "NOPE!!\n");
-                fprintf(stderr, "(%d,%d,%d,%d)\n", isx, isz, sx, sz);
+                // fprintf(stderr, "(%d,%d,%d,%d)\n", isx, isz, sx, sz);
                 txx[sx][sz]+=wlt[it];
 	            tzz[sx][sz]+=wlt[it];
             }

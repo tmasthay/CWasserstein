@@ -1,4 +1,5 @@
 import os
+from time import time
 
 def clean_files(files, default_ext='.rsf', check_none=False):
     if( check_none and type(files) == type(None) ):
@@ -32,6 +33,9 @@ def SeqFlow(output_files, input_files, cmd, verbose=False):
     inp_clean = clean_files(input_files, check_none=True)
     cmd = clean_cmd(out_clean, inp_clean, cmd)
     if( verbose ):
-        print(''''\'\'\'%s\'\'\''''%cmd)
+        print(''''\'\'\'%s\'\'\'...time='''%cmd, end='')
+    t = time()
     y = os.system(cmd)
+    if( verbose ):
+        print(time() - t)
     

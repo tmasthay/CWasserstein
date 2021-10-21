@@ -1,5 +1,16 @@
 #include <rsf.h>
 
+float my_max(float* x, int N){
+    int i, max;
+    max = x[0];
+    for(i = 0; i < N; i++){
+        if( x[i] > max ){
+            max = x[i];
+        }
+    }
+    return max;
+}
+
 float* linspace(float a, float b, int N){
     float *x, delta;
     int i;
@@ -39,7 +50,7 @@ float integrate(float* f, float* x, int N){
 
     for(ig = 0; ig < order; ig++){
         float curr_pt = dist * gpts[ig] + mid;
-        fprintf(stderr, "ig = %d\n", ig);
+        //fprintf(stderr, "ig = %d\n", ig);
         for(ix=1; ix < N; ix++){
             if( x[ix-1] <= curr_pt && curr_pt < x[ix] ){
                 float t = (x[ix] - gpts[ig]) / (x[ix] - x[ix-1]);
@@ -56,9 +67,14 @@ void renormalize(float* f, float *x, int N){
     int i;
     for(i = 0; i < N - 1; i++){
         sum += 0.5 * (f[i+1] + f[i]) * (x[i+1] - x[i]);
+        //sum += f[i];
     }
-    if( sum == 0.0 ) return;
+    if( sum == 0.0 ) {
+        //fprintf(stderr, "Unnormalizable...returning original\n");
+        return;
+    }
     float reciprocal = 1.0 / sum;
+    fprintf(stderr, "RECIP: %.16e\n", reciprocal);
     for( i = 0; i < N; i++ ){
         f[i] = reciprocal * f[i];
     }
@@ -71,11 +87,20 @@ void split_normalize(float* f,
     int N){
     int i;
     for(i = 0; i < N; i++){
-        f_pos[i] = f[i] >= 0 ? f[i] : 0.0;
+        if( f[i] == 0.0 ){
+            f_pos[i] = 0.0;
+            f_neg[i] = 0.0;
+        }
+        f_pos[i] = f[i] > 0 ? f[i] : 0.0;
         f_neg[i] = f[i] < 0 ? -f[i] : 0.0;
+        //fprintf(stderr, "BEFORE RENORMALIZATION: (i, pos, neg) = (%d, %.16e, %.16e)\n", i, f_pos[i], f_neg[i]);
     }
     renormalize(f_pos, x, N);
     renormalize(f_neg, x, N);
+
+    for(i = 0; i < N; i++){
+        fprintf(stderr, "(i, pos, neg) = (%d, %.16e, %.16e)\n", i, f_pos[i], f_neg[i]);
+    }
 }
 
 void cdf(float* f, float* x, float* F, int N){
@@ -137,9 +162,18 @@ void wass_int(float* dest, float* f, float* g, float* x, float* p, int N, int P)
     cdf(f,x,F,N);
     cdf(g,x,G,N);
 
+    int i;
+    for(i = 0; i < N; i++){
+       fprintf(stderr, "(i, f,g, F, G) = (%d, %.8f, %.8f, %.8f, %.8f)\n", i,f[i], g[i], F[i], G[i]);
+    }
+
     quantile(p, x, F, Finv, P, N);
     quantile(p, x, G, Ginv, P, N);
 
+    for(i = 0; i < P; i++){
+        float diff = Finv[i] - Ginv[i];
+        fprintf(stderr, "diff[%d] = %.15f\n", i, diff);
+    }
     for(ip = 0; ip < P; ip++){
         dest[ip] = Finv[ip] - Ginv[ip];
         dest[ip] = dest[ip] * dest[ip];
@@ -157,6 +191,9 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
     
     sum = 0.0;
     for(ix = 0; ix < N; ix++){
+        float avey = y[ix] + y[ix-1];
+        float dx = x[ix] - x[ix-1];
+        //fprintf(stderr, "(avey, dx) = (%.8f,%.8f)\n0", avey, dx);
         sum = sum + 0.5 * (x[ix] - x[ix-1]) * (y[ix] + y[ix-1]);
     }
     //sum = integrate(y, linspace(0.0, 1.0, 10*N), 10*N);
@@ -172,13 +209,38 @@ float wass2_split(float* f, float* g, float* x, float* p, int N, int P){
     g_pos = sf_floatalloc(N);
     g_neg = sf_floatalloc(N);
 
+    int i;
+
     split_normalize(f, f_pos, f_neg, x, N);
     split_normalize(g, g_pos, g_neg, x, N);
+
+    for(i = 0; i < N; i++){
+        //fprintf(stderr, "(i,f,f_pos,f_neg) = (%d,%f,%f,%f)\n", i,f[i], f_pos[i], f_neg[i]);
+    }
 
     pos = wass2(f_pos, g_pos, x, p, N, P);
     neg = wass2(f_neg, g_neg, x, p, N, P);
 
-    return pos*pos + neg*neg;
+    fprintf(stderr, "%.8f...%.8f\n", pos, neg);
+
+    //fprintf(stderr, "(+w,+mf,+mg,-w,-mf,-mg) = (%.15f,%.15f,%.15f,%.15f,%.15f,%.15f)\n", pos, my_max(f_pos,N), my_max(g_pos,N), neg, my_max(f_neg,N), my_max(g_neg,N));
+
+    return pos + neg;
+}
+
+float wass2abs(float* f, float* g, float* x, float* p, int N, int P){
+    int i;
+    float sum=0.0;
+
+    for(i = 0; i < N; i++){
+        if( f[i] < 0.0 ) f[i] = -1.0 * f[i];
+        if( g[i] < 0.0 ) g[i] = -1.0 * g[i];
+    }
+
+    renormalize(f,x,N);
+    renormalize(g,x,N);
+
+    return wass2(f,g,x,p,N,P);
 }
 
 float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int np){
@@ -191,18 +253,91 @@ float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int n
 
     for(iz = 0; iz < nz; iz++){
         for(ix = 0; ix < nx; ix++){
-            sum += wass2_split(f[iz][ix], g[iz][ix], t, p, nt, np);
+            float tmp = wass2_split(f[iz][ix], g[iz][ix], t, p, nt, np);
+            sum += tmp;
+            fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
         }
     }
     return sum;
 }
 
+float wass2traceabs(float*** f, float*** g, float* t, int nz, int nx, int nt, int np){
+        //assume n3xn2xn1=(z,x,t) coordinates
+    float sum=0.0, *p;
+    int iz, ix;
+
+    p = sf_floatalloc(np);
+    p = linspace(0.0, 1.0, np);
+
+    for(iz = 0; iz < nz; iz++){
+        for(ix = 0; ix < nx; ix++){
+            sum += wass2abs(f[iz][ix], g[iz][ix], t, p, nt, np);
+        }
+    }
+    return sum;
+}
+
+float wass2traceslice(float*** f, float*** g, float* t, int* slice, int ns, int nx, int nt, int np){
+    float ***f_sliced, ***g_sliced;
+    int is,ix,it;
+
+    f_sliced = sf_floatalloc3(ns, nx, nt);
+    g_sliced = sf_floatalloc3(ns, nx, nt);
+
+    for(is = 0; is < ns; is++){
+        for(ix = 0; ix < nx; ix++){
+            for(it = 0; it < nt; it++){
+                //fprintf(stderr, "f_s[%d][%d][%d]=f[%d][%d][%d]=%f\n", is,ix,it,slice[is],ix,it, f[slice[is]][ix][it]);
+                f_sliced[is][ix][it] = f[slice[is]][ix][it];
+                g_sliced[is][ix][it] = f[slice[is]][ix][it];
+            }
+        }
+    }
+    return wass2trace(f_sliced, g_sliced, t, ns, nx, nt, np);
+}
+
+float wass2tracesliceabs(float*** f, float*** g, float* t, int* slice, int ns, int nx, int nt, int np){
+    float ***f_sliced, ***g_sliced;
+    int is,ix,it;
+
+    f_sliced = sf_floatalloc3(ns, nx, nt);
+    g_sliced = sf_floatalloc3(ns, nx, nt);
+
+    for(is = 0; is < ns; is++){
+        for(ix = 0; ix < nx; ix++){
+            for(it = 0; it < nt; it++){
+                f_sliced[is][ix] = f[slice[is]][ix];
+                g_sliced[is][ix] = f[slice[is]][ix];
+            }
+        }
+    }
+    return wass2traceabs(f_sliced, g_sliced, t, ns, nx, nt, np);
+}
+
+float wass2tracesurf(float*** f, float*** g, float* t, int nx, int nt, int np){
+    int *slice;
+
+    slice = sf_intalloc(1);
+    slice[0] = 0;
+
+    return wass2traceslice(f, g, t, slice, 1, nx, nt, np);
+}
+
+float wass2tracesurfabs(float*** f, float*** g, float* t, int nx, int nt, int np){
+    int *slice;
+
+    slice = sf_intalloc(1);
+    slice[0] = 0;
+
+    return wass2tracesliceabs(f, g, t, slice, 1, nx, nt, np);
+}
+
 int main(int argc, char* argv[]){
     //assume structured grid
     int nz, nx, nt, nt_true, nz_check, nx_check, nt_check;
-    float ***f, ***g, *t;
+    float ***f, ***g, *t, *p, ***q;
 
-    sf_file f_file, g_file, t_file, wass_file;
+    sf_file f_file, g_file, t_file, wass_file, p_file, quant_file;
 
     sf_init(argc, argv);
 
@@ -214,19 +349,23 @@ int main(int argc, char* argv[]){
     //define outputs
     //T_file = sf_output("out");
     wass_file = sf_output("out");
+    p_file = sf_output("p");
+    quant_file = sf_output("q");
 
     //read command-line inputs
-    if (!sf_histint(f_file, "n3", &nz)) sf_error("No n3");
+    if (!sf_histint(f_file, "n1", &nz)) sf_error("No n3");
     if (!sf_histint(f_file, "n2", &nx)) sf_error("No n2");
-    if (!sf_histint(f_file, "n1", &nt)) sf_error("No n1");
-    if (!sf_histint(g_file, "n3", &nz_check)) sf_error("No n3: g");
+    if (!sf_histint(f_file, "n3", &nt)) sf_error("No n1");
+    if (!sf_histint(g_file, "n1", &nz_check)) sf_error("No n3: g");
     if (!sf_histint(g_file, "n2", &nx_check)) sf_error("No n2: g");
-    if (!sf_histint(g_file, "n1", &nt_check)) sf_error("No n1: g");
+    if (!sf_histint(g_file, "n3", &nt_check)) sf_error("No n1: g");
     if (!sf_histint(t_file, "n1", &nt_true)) sf_error("No n1: t");
 
-    fprintf(stderr, "nz = %d", nz);
-    fprintf(stderr, "nx = %d", nx);
-    fprintf(stderr, "nt = %d", nt);
+    // fprintf(stderr, "nz = %d", nz);
+    // fprintf(stderr, "nx = %d", nx);
+    // fprintf(stderr, "nt = %d", nt);
+
+    // fprintf(stderr, "(nt,nt_check,nt_true) = (%d,%d,%d)\n", nt, nt_check, nt_true);
 
     //Input validation
     if( nz_check != nz ) sf_error("Dimension mismatch: z");
@@ -250,14 +389,25 @@ int main(int argc, char* argv[]){
     }
     sf_floatread(t, nt, t_file);
 
+    int it;
+    for(iz = 0; iz < nz; iz++){
+        for(ix = 0; ix < nx; ix++){
+            for(it = 0; it < nt; it++){
+                float tmp = f[iz][ix][it] - g[iz][ix][it];
+                fprintf(stderr, "(iz,ix,it,diff) = (%d,%d,%d,%.8f)\n", iz,ix,it,tmp);
+            }
+        }
+    }
+
     //transport(f,g,T,x,N);
     float distance;
-    int np=5*nt;
-    distance = wass2trace(f,g,t,nz, nx, nt,np);
+    int np=nt;
+    //distance = wass2tracesurfabs(f,g,t,nx,nt,np);
+    distance = wass2tracesurf(f,g,t,nx,nt,np);
+    //distance = wass2trace(f,g,t,nz,nx,nt,np);
 
     float* distance_tmp;
     distance_tmp = sf_floatalloc(1);
-    int it;
     for(it = 0; it < 1; it++){
         distance_tmp[it] = distance;
     }
@@ -265,4 +415,16 @@ int main(int argc, char* argv[]){
     sf_putint(wass_file, "n2", 1);
     sf_putint(wass_file, "n3", 1);
     sf_floatwrite(distance_tmp, 1, wass_file);
+
+    // float ***F, ***G;
+
+    // p = sf_floatalloc(np);
+    // q = sf_floatalloc3(nz,nx,np);
+    // F = sf_floatalloc3(nz,nx,nt);
+    // G = sf_floatalloc3(nz,nx,nt);
+
+    // cum
+
+    // p = linspace(0.0, 1.0, np);
+
 }
