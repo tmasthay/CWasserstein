@@ -90,7 +90,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         x_inputs = '%s %s %s'%(wxs, wxs_ref, wass)
                         z_inputs = '%s %s %s'%(wzs, wzs_ref, wass)
                         cmd = '''./${SOURCES[2]} g=${SOURCES[1]} t=t.rsf'''
-                        
+                
                         SeqFlow(x_name, x_inputs, cmd)
                         SeqFlow(z_name, z_inputs, cmd)
 
