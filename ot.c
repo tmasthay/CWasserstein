@@ -171,28 +171,34 @@ void wass_int(float* dest, float* f, float* g, float* x, float* p, int N, int P)
     quantile(p, x, G, Ginv, P, N);
 
     for(i = 0; i < P; i++){
-        float diff = Finv[i] - Ginv[i];
+        //float diff = Finv[i] - Ginv[i];
         //fprintf(stderr, "diff[%d] = %.15f\n", i, diff);
     }
     for(ip = 0; ip < P; ip++){
         dest[ip] = Finv[ip] - Ginv[ip];
         dest[ip] = dest[ip] * dest[ip];
-        //fprintf(stderr, "dest[%d] = %.15e\n", ip, dest[ip]);
+        fprintf(stderr, "dest[%d] = %.15e\n", ip, dest[ip]);
     }
 }
 
 float wass2(float* f, float* g, float* x, float*p, int N, int P){
-    int ix;
+    int ip;
     float *y, sum;
 
     y = sf_floatalloc(P);
 
     //transport(f, g, T, x, N);
     wass_int(y, f, g, x, p, N, P);
+
+    fprintf(stderr, "max(y) = %.15f", my_max(y, P));
     
     sum = 0.0;
-    for(ix = 0; ix < N - 1; ix++){
-        sum = sum + 0.5 * (x[ix+1] - x[ix]) * (y[ix+1] + y[ix]);
+    for(ip = 0; ip < P - 1; ip++){
+        float dp = p[ip+1] - p[ip];
+        float avg = y[ip+1] + y[ip];
+        sum = sum + 0.5 * (p[ip+1] - p[ip]) * (y[ip+1] + y[ip]);
+
+        fprintf(stderr, "(dp, avg, sum) = (%.15f, %.15f, %.15f)\n", dp, avg, sum);
     }
     //sum = integrate(y, linspace(0.0, 1.0, 10*N), 10*N);
     return sum;
@@ -207,19 +213,19 @@ float wass2_split(float* f, float* g, float* x, float* p, int N, int P){
     g_pos = sf_floatalloc(N);
     g_neg = sf_floatalloc(N);
 
-    int i;
-
+    //int i;
     split_normalize(f, f_pos, f_neg, x, N);
     split_normalize(g, g_pos, g_neg, x, N);
 
+    int i;
     for(i = 0; i < N; i++){
-        ////fprintf(stderr, "(i,f,f_pos,f_neg) = (%d,%f,%f,%f)\n", i,f[i], f_pos[i], f_neg[i]);
+        fprintf(stderr, "(i,f,g,f_pos,g_pos,f_neg,g_neg,pos_diff,neg_diff, tot_diff) = (%d, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e)\n", i, f[i], g[i], f_pos[i], g_pos[i], f_neg[i], g_neg[i], f_pos[i] - g_pos[i], f_neg[i] - g_neg[i], f[i] - g[i]);
     }
 
     pos = wass2(f_pos, g_pos, x, p, N, P);
     neg = wass2(f_neg, g_neg, x, p, N, P);
 
-    //fprintf(stderr, "%.8f...%.8f\n", pos, neg);
+    fprintf(stderr, "%.8f...%.8f\n", pos, neg);
 
     ////fprintf(stderr, "(+w,+mf,+mg,-w,-mf,-mg) = (%.15f,%.15f,%.15f,%.15f,%.15f,%.15f)\n", pos, my_max(f_pos,N), my_max(g_pos,N), neg, my_max(f_neg,N), my_max(g_neg,N));
 
@@ -228,7 +234,6 @@ float wass2_split(float* f, float* g, float* x, float* p, int N, int P){
 
 float wass2abs(float* f, float* g, float* x, float* p, int N, int P){
     int i;
-    float sum=0.0;
 
     for(i = 0; i < N; i++){
         if( f[i] < 0.0 ) f[i] = -1.0 * f[i];
@@ -253,7 +258,7 @@ float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int n
         for(ix = 0; ix < nx; ix++){
             float tmp = wass2_split(f[iz][ix], g[iz][ix], t, p, nt, np);
             sum += tmp;
-            //fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
+            fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
         }
     }
     return sum;
@@ -285,9 +290,10 @@ float wass2traceslice(float*** f, float*** g, float* t, int* slice, int ns, int 
     for(is = 0; is < ns; is++){
         for(ix = 0; ix < nx; ix++){
             for(it = 0; it < nt; it++){
-                ////fprintf(stderr, "f_s[%d][%d][%d]=f[%d][%d][%d]=%f\n", is,ix,it,slice[is],ix,it, f[slice[is]][ix][it]);
+                //fprintf(stderr, "(slice[is]-->is,ix,it,f_s, g_s) = (%d-->%d, %d, %d, %.4e, %.4e)", slice[is], is, ix, it, f[slice[is]][ix][it], g[slice[is]][ix][it]);
                 f_sliced[is][ix][it] = f[slice[is]][ix][it];
-                g_sliced[is][ix][it] = f[slice[is]][ix][it];
+                g_sliced[is][ix][it] = g[slice[is]][ix][it];
+                //fprintf(stderr, "     :::::     (slice[is]-->is,ix,it,f_s, g_s) = (%d-->%d, %d, %d, %.4e, %.4e)\n", slice[is], is, ix, it, f_sliced[is][ix][it], g_sliced[is][ix][it]);
             }
         }
     }
@@ -390,8 +396,8 @@ int main(int argc, char* argv[]){
     for(iz = 0; iz < nz; iz++){
         for(ix = 0; ix < nx; ix++){
             for(it = 0; it < nt; it++){
-                float tmp = f[iz][ix][it] - g[iz][ix][it];
-                fprintf(stderr, "(iz,ix,it,diff) = (%d,%d,%d,%.8f)\n", iz,ix,it,tmp);
+                //float tmp = f[iz][ix][it] - g[iz][ix][it];
+                //fprintf(stderr, "(iz,ix,it,diff) = (%d,%d,%d,%.8f)\n", iz,ix,it,tmp);
             }
         }
     }
@@ -415,78 +421,122 @@ int main(int argc, char* argv[]){
 
 
 
-    sf_file p_file, cdffpos_file, cdffneg_file, cdfgpos_file, cdfgneg_file, ff_file, fpos_file, fneg_file, gg_file, gpos_file, gneg_file;
-    float ***F_pos, ***F_neg, ***G_pos, ***G_neg, *f_pos, *f_neg, *g_pos, *g_neg;
+    // sf_file p_file, cdffpos_file, cdffneg_file, cdfgpos_file, cdfgneg_file, ff_file, fpos_file, fneg_file, gg_file, gpos_file, gneg_file;
+    // sf_file qfpos_file, qfneg_file, qgpos_file, qgneg_file, integrandpos_file, integrandneg_file;
+    // float ***F_pos, ***F_neg, ***G_pos, ***G_neg, *f_pos, *f_neg, *g_pos, *g_neg, ***QFpos, ***QFneg, ***QGpos, ***QGneg, ***integrand_pos, ***integrand_neg;
 
-    p_file = sf_output("p");
-    cdffpos_file = sf_output("f_cdfpos");
-    cdffneg_file = sf_output("f_cdfneg");
-    cdfgneg_file = sf_output("g_cdfneg");
-    cdfgpos_file = sf_output("g_cdfpos");
-    ff_file = sf_output("ff");
-    fpos_file = sf_output("fpos");
-    fneg_file = sf_output("fneg");
-    gg_file = sf_output("gg");
-    gpos_file = sf_output("gpos");
-    gneg_file = sf_output("gneg");
+    // p_file = sf_output("p");
+    // cdffpos_file = sf_output("f_cdfpos");
+    // cdffneg_file = sf_output("f_cdfneg");
+    // cdfgneg_file = sf_output("g_cdfneg");
+    // cdfgpos_file = sf_output("g_cdfpos");
+    // ff_file = sf_output("ff");
+    // fpos_file = sf_output("fpos");
+    // fneg_file = sf_output("fneg");
+    // gg_file = sf_output("gg");
+    // gpos_file = sf_output("gpos");
+    // gneg_file = sf_output("gneg");
 
-    p = sf_floatalloc(np);
-    q = sf_floatalloc3(nz,nx,np);
+    
+    // //quantile files
+    // qfpos_file = sf_output("qfpos");
+    // qfneg_file = sf_output("qfneg");
+    // qgpos_file = sf_output("qgpos");
+    // qgneg_file = sf_output("qgneg");
+    // integrandpos_file = sf_output("integrand_pos");
+    // integrandneg_file = sf_output("integrand_neg");
 
-    F_pos = sf_floatalloc3(nz,nx,nt);
-    F_neg = sf_floatalloc3(nz,nx,nt);
+    // p = sf_floatalloc(np);
+    // q = sf_floatalloc3(nz,nx,np);
 
-    G_pos = sf_floatalloc3(nz,nx,nt);
-    G_neg = sf_floatalloc3(nz,nx,nt);
+    // F_pos = sf_floatalloc3(nz,nx,nt);
+    // F_neg = sf_floatalloc3(nz,nx,nt);
 
-    f_pos = sf_floatalloc(nt);
-    f_neg = sf_floatalloc(nt);
+    // G_pos = sf_floatalloc3(nz,nx,nt);
+    // G_neg = sf_floatalloc3(nz,nx,nt);
 
-    g_pos = sf_floatalloc(nt);
-    g_neg = sf_floatalloc(nt);
+    // f_pos = sf_floatalloc(nt);
+    // f_neg = sf_floatalloc(nt);
 
-    p = linspace(0.0, 1.0, np);
+    // g_pos = sf_floatalloc(nt);
+    // g_neg = sf_floatalloc(nt);
 
-    split_normalize(f[0][0], f_pos, f_neg, t, nt);
-    split_normalize(g[0][0], g_pos, g_neg, t, nt);
+    // p = linspace(0.0, 1.0, np);
 
-    sf_putint(cdffpos_file, "n1", nt);
-    sf_putint(cdffpos_file, "n2", 1);
-    sf_putint(cdffpos_file, "n3", 1);
+    // QFpos = sf_floatalloc3(nz,nx,np);
+    // QFneg = sf_floatalloc3(nz,nx,np);
+    // QGpos = sf_floatalloc3(nz,nx,np);
+    // QGneg = sf_floatalloc3(nz,nx,np);
+
+    // integrand_pos = sf_floatalloc3(nz,nx,np);
+    // integrand_neg = sf_floatalloc3(nz, nx, np);
+
+    // split_normalize(f[0][0], f_pos, f_neg, t, nt);
+    // split_normalize(g[0][0], g_pos, g_neg, t, nt);
+
+    // sf_putint(cdffpos_file, "n1", nt);
+    // sf_putint(cdffpos_file, "n2", 1);
+    // sf_putint(cdffpos_file, "n3", 1);
         
-    sf_putint(cdffneg_file, "n1", nt);
-    sf_putint(cdffneg_file, "n2", 1);
-    sf_putint(cdffneg_file, "n3", 1);
+    // sf_putint(cdffneg_file, "n1", nt);
+    // sf_putint(cdffneg_file, "n2", 1);
+    // sf_putint(cdffneg_file, "n3", 1);
 
-    sf_putint(cdfgpos_file, "n1", nt);
-    sf_putint(cdfgpos_file, "n2", 1);
-    sf_putint(cdfgpos_file, "n3", 1);
+    // sf_putint(cdfgpos_file, "n1", nt);
+    // sf_putint(cdfgpos_file, "n2", 1);
+    // sf_putint(cdfgpos_file, "n3", 1);
 
-    sf_putint(cdfgneg_file, "n1", nt);
-    sf_putint(cdfgneg_file, "n2", 1);
-    sf_putint(cdfgneg_file, "n3", 1);
+    // sf_putint(cdfgneg_file, "n1", nt);
+    // sf_putint(cdfgneg_file, "n2", 1);
+    // sf_putint(cdfgneg_file, "n3", 1);
 
-    cdf(f_pos, t, F_pos[0][0], nt);
-    cdf(f_neg, t, F_neg[0][0], nt);
+    // cdf(f_pos, t, F_pos[0][0], nt);
+    // cdf(f_neg, t, F_neg[0][0], nt);
 
-    cdf(g_pos, t, G_pos[0][0], nt);
-    cdf(g_neg, t, G_neg[0][0], nt);
+    // cdf(g_pos, t, G_pos[0][0], nt);
+    // cdf(g_neg, t, G_neg[0][0], nt);
 
-    fprintf(stderr, "HERE!!!\n");
-    sf_floatwrite(F_pos[0][0], nt, cdffpos_file);
-    fprintf(stderr, "HERE FIRST!!!\n");
-    sf_floatwrite(F_neg[0][0], nt, cdffneg_file);
-    sf_floatwrite(G_pos[0][0], nt, cdfgpos_file);
-    sf_floatwrite(G_neg[0][0], nt, cdfgneg_file);
-    fprintf(stderr, "Cumulative dist. works\n");
-    sf_floatwrite(f[0][0], nt, ff_file);
-    fprintf(stderr, "Density writing works\n");
-    sf_floatwrite(f_pos, nt, fpos_file);
-    sf_floatwrite(f_neg, nt, fneg_file);
-    sf_floatwrite(g[0][0], nt, gg_file);
-    sf_floatwrite(g_pos, nt, gpos_file);
-    sf_floatwrite(g_neg, nt, gneg_file);
-    sf_floatwrite(p, np, p_file);
+    // quantile(p, t, F_pos[0][0], QFpos[0][0], np, nt);
+    // quantile(p, t, F_neg[0][0], QFneg[0][0], np, nt);
+    // quantile(p, t, G_pos[0][0], QGpos[0][0], np, nt);
+    // quantile(p, t, G_neg[0][0], QGneg[0][0], np, nt);
 
-    fprintf(stderr, "HERE AGAIN!!!\n");
+    // wass_int(integrand_pos[0][0], f_pos, g_pos, t,p, nt, np);
+    // wass_int(integrand_neg[0][0], f_neg, g_neg, t, p, nt, np);
+
+    // fprintf(stderr, "HERE!!!\n");
+    // sf_floatwrite(F_pos[0][0], nt, cdffpos_file);
+    // fprintf(stderr, "HERE FIRST!!!\n");
+    // sf_floatwrite(F_neg[0][0], nt, cdffneg_file);
+    // sf_floatwrite(G_pos[0][0], nt, cdfgpos_file);
+    // sf_floatwrite(G_neg[0][0], nt, cdfgneg_file);
+    // fprintf(stderr, "Cumulative dist. works\n");
+    // sf_floatwrite(f[0][0], nt, ff_file);
+    // fprintf(stderr, "Density writing works\n");
+    // sf_floatwrite(f_pos, nt, fpos_file);
+    // sf_floatwrite(f_neg, nt, fneg_file);
+    // sf_floatwrite(g[0][0], nt, gg_file);
+    // sf_floatwrite(g_pos, nt, gpos_file);
+    // sf_floatwrite(g_neg, nt, gneg_file);
+    // sf_floatwrite(p, np, p_file);
+    // sf_floatwrite(QFpos[0][0], np, qfpos_file);
+    // sf_floatwrite(QFneg[0][0], np, qfneg_file);
+    // sf_floatwrite(QGpos[0][0], np, qgpos_file);
+    // sf_floatwrite(QGneg[0][0], np, qgneg_file);
+    // sf_floatwrite(integrand_pos[0][0], np, integrandpos_file);
+    // sf_floatwrite(integrand_neg[0][0], np, integrandneg_file);
+
+    // int j;
+    // float total_pos=0.0, total_neg=0.0;
+    // for(j = 0; j < np - 1; j++){
+    //    // fprintf(stderr, "(j,integrand_pos, int_neg) = (%d, %.8f, %.8f)\n", j, integrand_pos[0][0][j], integrand_neg[0][0][j]);
+    //    float dp = p[j+1] - p[j];
+    //    float avgpos = 0.5 * (integrand_pos[0][0][j+1] + integrand_pos[0][0][j]);
+    //    float avgneg = 0.5 * (integrand_neg[0][0][j+1] + integrand_neg[0][0][j]);
+    //    total_pos += dp * avgpos;
+    //    total_neg += dp * avgneg;
+    // }
+    // fprintf(stderr, "TOTAL_POS, TOTAL_NEG = (%.15f, %15f)\n", total_pos, total_neg);
+
+    // fprintf(stderr, "HERE AGAIN!!!\n");
 }
