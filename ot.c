@@ -50,7 +50,7 @@ float integrate(float* f, float* x, int N){
 
     for(ig = 0; ig < order; ig++){
         float curr_pt = dist * gpts[ig] + mid;
-        ////fprintf(stderr, "ig = %d\n", ig);
+        //////fprintf(stderr, "ig = %d\n", ig);
         for(ix=1; ix < N; ix++){
             if( x[ix-1] <= curr_pt && curr_pt < x[ix] ){
                 float t = (x[ix] - gpts[ig]) / (x[ix] - x[ix-1]);
@@ -70,11 +70,11 @@ void renormalize(float* f, float *x, int N){
         //sum += f[i];
     }
     if( sum == 0.0 ) {
-        ////fprintf(stderr, "Unnormalizable...returning original\n");
+        //////fprintf(stderr, "Unnormalizable...returning original\n");
         return;
     }
     float reciprocal = 1.0 / sum;
-    //fprintf(stderr, "RECIP: %.16e\n", reciprocal);
+    ////fprintf(stderr, "RECIP: %.16e\n", reciprocal);
     for( i = 0; i < N; i++ ){
         f[i] = reciprocal * f[i];
     }
@@ -93,13 +93,13 @@ void split_normalize(float* f,
         }
         f_pos[i] = f[i] > 0 ? f[i] : 0.0;
         f_neg[i] = f[i] < 0 ? -f[i] : 0.0;
-        ////fprintf(stderr, "BEFORE RENORMALIZATION: (i, pos, neg) = (%d, %.16e, %.16e)\n", i, f_pos[i], f_neg[i]);
+        //////fprintf(stderr, "BEFORE RENORMALIZATION: (i, pos, neg) = (%d, %.16e, %.16e)\n", i, f_pos[i], f_neg[i]);
     }
     renormalize(f_pos, x, N);
     renormalize(f_neg, x, N);
 
     for(i = 0; i < N; i++){
-        //fprintf(stderr, "(i, pos, neg) = (%d, %.16e, %.16e)\n", i, f_pos[i], f_neg[i]);
+        ////fprintf(stderr, "(i, pos, neg) = (%d, %.16e, %.16e)\n", i, f_pos[i], f_neg[i]);
     }
 }
 
@@ -125,13 +125,13 @@ void quantile(float* p, float* x, float* F, float* G, int Np, int Nx){
                 sx = ix;
                 if( F[ix] == F[ix-1] ){
                     G[ip] = 0.5 * (x[ix] + x[ix-1]);
-                    ////fprintf(stderr, "HERE!\n");
+                    //////fprintf(stderr, "HERE!\n");
                 }
                 else{
                     float t = (F[ix] - p[ip]) / (F[ix] - F[ix-1]);
                     G[ip] = t * x[ix-1] + (1-t) * x[ix];
                 }
-               // //fprintf(stderr, "(ix, sx, p, G) = (%d, %d, %.8f, %.8f)\n", ix, sx, p[ip], G[ip]);
+               // ////fprintf(stderr, "(ix, sx, p, G) = (%d, %d, %.8f, %.8f)\n", ix, sx, p[ip], G[ip]);
                 break;
             }
         }
@@ -164,7 +164,7 @@ void wass_int(float* dest, float* f, float* g, float* x, float* p, int N, int P)
 
     int i;
     for(i = 0; i < N; i++){
-       //fprintf(stderr, "(i, f,g, F, G) = (%d, %.8f, %.8f, %.8f, %.8f)\n", i,f[i], g[i], F[i], G[i]);
+       ////fprintf(stderr, "(i, f,g, F, G) = (%d, %.8f, %.8f, %.8f, %.8f)\n", i,f[i], g[i], F[i], G[i]);
     }
 
     quantile(p, x, F, Finv, P, N);
@@ -172,12 +172,12 @@ void wass_int(float* dest, float* f, float* g, float* x, float* p, int N, int P)
 
     for(i = 0; i < P; i++){
         //float diff = Finv[i] - Ginv[i];
-        //fprintf(stderr, "diff[%d] = %.15f\n", i, diff);
+        ////fprintf(stderr, "diff[%d] = %.15f\n", i, diff);
     }
     for(ip = 0; ip < P; ip++){
         dest[ip] = Finv[ip] - Ginv[ip];
         dest[ip] = dest[ip] * dest[ip];
-        fprintf(stderr, "dest[%d] = %.15e\n", ip, dest[ip]);
+        //fprintf(stderr, "dest[%d] = %.15e\n", ip, dest[ip]);
     }
 }
 
@@ -190,7 +190,7 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
     //transport(f, g, T, x, N);
     wass_int(y, f, g, x, p, N, P);
 
-    fprintf(stderr, "max(y) = %.15f", my_max(y, P));
+    //fprintf(stderr, "max(y) = %.15f", my_max(y, P));
     
     sum = 0.0;
     for(ip = 0; ip < P - 1; ip++){
@@ -198,7 +198,7 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         float avg = y[ip+1] + y[ip];
         sum = sum + 0.5 * (p[ip+1] - p[ip]) * (y[ip+1] + y[ip]);
 
-        fprintf(stderr, "(dp, avg, sum) = (%.15f, %.15f, %.15f)\n", dp, avg, sum);
+        //fprintf(stderr, "(dp, avg, sum) = (%.15f, %.15f, %.15f)\n", dp, avg, sum);
     }
     //sum = integrate(y, linspace(0.0, 1.0, 10*N), 10*N);
     return sum;
@@ -219,15 +219,15 @@ float wass2_split(float* f, float* g, float* x, float* p, int N, int P){
 
     int i;
     for(i = 0; i < N; i++){
-        fprintf(stderr, "(i,f,g,f_pos,g_pos,f_neg,g_neg,pos_diff,neg_diff, tot_diff) = (%d, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e)\n", i, f[i], g[i], f_pos[i], g_pos[i], f_neg[i], g_neg[i], f_pos[i] - g_pos[i], f_neg[i] - g_neg[i], f[i] - g[i]);
+        //fprintf(stderr, "(i,f,g,f_pos,g_pos,f_neg,g_neg,pos_diff,neg_diff, tot_diff) = (%d, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e, %.4e)\n", i, f[i], g[i], f_pos[i], g_pos[i], f_neg[i], g_neg[i], f_pos[i] - g_pos[i], f_neg[i] - g_neg[i], f[i] - g[i]);
     }
 
     pos = wass2(f_pos, g_pos, x, p, N, P);
     neg = wass2(f_neg, g_neg, x, p, N, P);
 
-    fprintf(stderr, "%.8f...%.8f\n", pos, neg);
+    //fprintf(stderr, "%.8f...%.8f\n", pos, neg);
 
-    ////fprintf(stderr, "(+w,+mf,+mg,-w,-mf,-mg) = (%.15f,%.15f,%.15f,%.15f,%.15f,%.15f)\n", pos, my_max(f_pos,N), my_max(g_pos,N), neg, my_max(f_neg,N), my_max(g_neg,N));
+    //////fprintf(stderr, "(+w,+mf,+mg,-w,-mf,-mg) = (%.15f,%.15f,%.15f,%.15f,%.15f,%.15f)\n", pos, my_max(f_pos,N), my_max(g_pos,N), neg, my_max(f_neg,N), my_max(g_neg,N));
 
     return pos + neg;
 }
@@ -258,7 +258,7 @@ float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int n
         for(ix = 0; ix < nx; ix++){
             float tmp = wass2_split(f[iz][ix], g[iz][ix], t, p, nt, np);
             sum += tmp;
-            fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
+            //fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
         }
     }
     return sum;
@@ -290,10 +290,10 @@ float wass2traceslice(float*** f, float*** g, float* t, int* slice, int ns, int 
     for(is = 0; is < ns; is++){
         for(ix = 0; ix < nx; ix++){
             for(it = 0; it < nt; it++){
-                //fprintf(stderr, "(slice[is]-->is,ix,it,f_s, g_s) = (%d-->%d, %d, %d, %.4e, %.4e)", slice[is], is, ix, it, f[slice[is]][ix][it], g[slice[is]][ix][it]);
+                ////fprintf(stderr, "(slice[is]-->is,ix,it,f_s, g_s) = (%d-->%d, %d, %d, %.4e, %.4e)", slice[is], is, ix, it, f[slice[is]][ix][it], g[slice[is]][ix][it]);
                 f_sliced[is][ix][it] = f[slice[is]][ix][it];
                 g_sliced[is][ix][it] = g[slice[is]][ix][it];
-                //fprintf(stderr, "     :::::     (slice[is]-->is,ix,it,f_s, g_s) = (%d-->%d, %d, %d, %.4e, %.4e)\n", slice[is], is, ix, it, f_sliced[is][ix][it], g_sliced[is][ix][it]);
+                ////fprintf(stderr, "     :::::     (slice[is]-->is,ix,it,f_s, g_s) = (%d-->%d, %d, %d, %.4e, %.4e)\n", slice[is], is, ix, it, f_sliced[is][ix][it], g_sliced[is][ix][it]);
             }
         }
     }
@@ -364,11 +364,11 @@ int main(int argc, char* argv[]){
     if (!sf_histint(g_file, "n3", &nt_check)) sf_error("No n1: g");
     if (!sf_histint(t_file, "n1", &nt_true)) sf_error("No n1: t");
 
-    // //fprintf(stderr, "nz = %d", nz);
-    // //fprintf(stderr, "nx = %d", nx);
-    // //fprintf(stderr, "nt = %d", nt);
+    // ////fprintf(stderr, "nz = %d", nz);
+    // ////fprintf(stderr, "nx = %d", nx);
+    // ////fprintf(stderr, "nt = %d", nt);
 
-    // //fprintf(stderr, "(nt,nt_check,nt_true) = (%d,%d,%d)\n", nt, nt_check, nt_true);
+    // ////fprintf(stderr, "(nt,nt_check,nt_true) = (%d,%d,%d)\n", nt, nt_check, nt_true);
 
     //Input validation
     if( nz_check != nz ) sf_error("Dimension mismatch: z");
@@ -385,7 +385,7 @@ int main(int argc, char* argv[]){
     int iz, ix;
     for(iz = 0; iz < nz; iz++){
         for(ix = 0; ix < nx; ix++){
-            ////fprintf(stderr, "(iz,ix) = (%d, %d)\n", iz, ix);
+            //////fprintf(stderr, "(iz,ix) = (%d, %d)\n", iz, ix);
             sf_floatread(f[iz][ix], nt, f_file);
             sf_floatread(g[iz][ix], nt, g_file);
         }
@@ -397,7 +397,7 @@ int main(int argc, char* argv[]){
         for(ix = 0; ix < nx; ix++){
             for(it = 0; it < nt; it++){
                 //float tmp = f[iz][ix][it] - g[iz][ix][it];
-                //fprintf(stderr, "(iz,ix,it,diff) = (%d,%d,%d,%.8f)\n", iz,ix,it,tmp);
+                ////fprintf(stderr, "(iz,ix,it,diff) = (%d,%d,%d,%.8f)\n", iz,ix,it,tmp);
             }
         }
     }
@@ -504,15 +504,15 @@ int main(int argc, char* argv[]){
     // wass_int(integrand_pos[0][0], f_pos, g_pos, t,p, nt, np);
     // wass_int(integrand_neg[0][0], f_neg, g_neg, t, p, nt, np);
 
-    // fprintf(stderr, "HERE!!!\n");
+    // //fprintf(stderr, "HERE!!!\n");
     // sf_floatwrite(F_pos[0][0], nt, cdffpos_file);
-    // fprintf(stderr, "HERE FIRST!!!\n");
+    // //fprintf(stderr, "HERE FIRST!!!\n");
     // sf_floatwrite(F_neg[0][0], nt, cdffneg_file);
     // sf_floatwrite(G_pos[0][0], nt, cdfgpos_file);
     // sf_floatwrite(G_neg[0][0], nt, cdfgneg_file);
-    // fprintf(stderr, "Cumulative dist. works\n");
+    // //fprintf(stderr, "Cumulative dist. works\n");
     // sf_floatwrite(f[0][0], nt, ff_file);
-    // fprintf(stderr, "Density writing works\n");
+    // //fprintf(stderr, "Density writing works\n");
     // sf_floatwrite(f_pos, nt, fpos_file);
     // sf_floatwrite(f_neg, nt, fneg_file);
     // sf_floatwrite(g[0][0], nt, gg_file);
@@ -529,14 +529,14 @@ int main(int argc, char* argv[]){
     // int j;
     // float total_pos=0.0, total_neg=0.0;
     // for(j = 0; j < np - 1; j++){
-    //    // fprintf(stderr, "(j,integrand_pos, int_neg) = (%d, %.8f, %.8f)\n", j, integrand_pos[0][0][j], integrand_neg[0][0][j]);
+    //    // //fprintf(stderr, "(j,integrand_pos, int_neg) = (%d, %.8f, %.8f)\n", j, integrand_pos[0][0][j], integrand_neg[0][0][j]);
     //    float dp = p[j+1] - p[j];
     //    float avgpos = 0.5 * (integrand_pos[0][0][j+1] + integrand_pos[0][0][j]);
     //    float avgneg = 0.5 * (integrand_neg[0][0][j+1] + integrand_neg[0][0][j]);
     //    total_pos += dp * avgpos;
     //    total_neg += dp * avgneg;
     // }
-    // fprintf(stderr, "TOTAL_POS, TOTAL_NEG = (%.15f, %15f)\n", total_pos, total_neg);
+    // //fprintf(stderr, "TOTAL_POS, TOTAL_NEG = (%.15f, %15f)\n", total_pos, total_neg);
 
-    // fprintf(stderr, "HERE AGAIN!!!\n");
+    // //fprintf(stderr, "HERE AGAIN!!!\n");
 }

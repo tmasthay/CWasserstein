@@ -19,6 +19,8 @@ args[qfneg]=qfneg
 args[qfpos]=qfpos
 args[qgpos]=qgpos
 args[qgneg]=qgneg
+args[integrand_pos]=intpos
+args[integrand_neg]=intneg
 
 input_name=top_syn
 output_name=tmp
@@ -28,6 +30,8 @@ full_input_ref_top=top_syn
 
 full_input_test=wavz_0.3000_0.3000
 full_input_test_top=top_upperleft
+
+pdf_output_name=bigpdf
 
 full_args=""
 
@@ -44,9 +48,17 @@ sfwindow n1=1 f1=0 n2=1 f2=10 < $full_input_test.rsf | sfput n1=1 n2=1 n3=$1 > $
 
 ./ot.exe $full_args < $input_name.rsf > $output_name.rsf
 
+nt=$1
+T=$2
+np=$3
+
 (
+   LC_NUMERIC="en_US.UTF-8"
    create_rsf(){
-      sfput n1=$1 n2=1 n3=1 < $2.rsf | sfgraph title="$2" > $2.vpl 
+      A="$3 / $1"
+      B=$(awk "BEGIN {printf \"%.15f\n\", $A"})
+      echo "B = $B"
+      sfput n1=$1 n2=1 n3=1 d1=$B < $2.rsf | sfgraph title="$2" > $2.vpl 
    }
 
    sfp(){
@@ -55,24 +67,45 @@ sfwindow n1=1 f1=0 n2=1 f2=10 < $full_input_test.rsf | sfput n1=1 n2=1 n3=$1 > $
 
    cp(){
        echo "Creating RSF and VPL for ${args[$2]}"
-       create_rsf $1 ${args[$2]}
-       sfp ${args[$2]}
+       create_rsf $1 ${args[$2]} $3
+       #sfp ${args[$2]}
+       vpconvert ${args[$2]}.vpl format=jpeg
+   }
+
+   cpt(){
+      cp $nt $1 $T
+   }
+
+   cpp(){
+      cp $np $1 1.0
    }
    
-   cp $1 f_cdfpos
-   cp $1 f_cdfneg
-   cp $1 g_cdfpos
-   cp $1 g_cdfneg
-   cp $1 ff
-   cp $1 fpos
-   cp $1 fneg
-   cp $1 gg
-   cp $1 gpos
-   cp $1 gneg
-   cp $1 qfneg
-   cp $1 qfpos
-   cp $1 qgpos
-   cp $1 qgneg
+   cpt ff
+   cpt gg
+
+   cpt fpos 
+   cpt gpos
+   
+   cpt fneg
+   cpt gneg
+
+   cpt f_cdfpos
+   cpt g_cdfpos
+
+   cpt f_cdfneg
+   cpt g_cdfneg
+
+   cpp qfpos 
+   cpp qgpos 
+
+   cpp qfneg
+   cpp qgneg
+
+   cpp integrand_pos
+   cpp integrand_neg
+
+   convert $(ls -t *.jpeg | tac) $pdf_output_name.pdf
+   kill $(pgrep sfpen)
 )
 
 #sfput n1=$1 n2=1 n3=1 < F_pos.rsf | sfgraph title="F_pos" > F_pos.vpl
