@@ -77,4 +77,38 @@ def  forward(d):
     SeqFlow(combine(['wavz','wavx']), combine(['vp', 'vs', 'rho']) + ' ' + elas,
         fc, True)
 
+def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
+    muz = mu[0]
+    mux = mu[1]
+    mut = mu[2]
+
+    sigz = sig[0]
+    sigx = sig[1]
+    sigt = sig[2]
+
+    def my_gauss(var_name, mean, stddev):
+        C = sqrt(2) * stddev
+        C = 1.0 / C
+        D = mean * C
+        s = '%.15e * %s - %.15e'%(C,var_name,D)
+        s = '%s * %s'%(s,s)
+        return 'exp(%s)'%s
+
+    w2 = []
+
+    basezx = '%s * %s'%(my_gauss('x1', muz, sigz), my_gauss('x2', mux, sigx))
+    tail_cmd = 'n1=%d n2=%d n3=%d d1=%.15e d2=%.15e d3=%.15e'%(nz,nx,nt,dz,dx,dt)
+
+    def get_curr(the_shift):
+        return '%s * %s'%(basezx, my_gauss('x3', mut-the_shift, sigt))
+
+    Flow('t_test', None, 'math output="x1" n1=%d d1=%.15e'%(nt, dt))
+    Flow('ref_t_test', None, 'math output="%s" %s'%(get_curr(0.0), tail_cmd))
+
+    for t in time_shifts:
+        curr = get_curr(t)
+        output_name = 'test_%.4e'%t
+        Flow(output_name, None, 'math output="%s" %s'%(curr,tail_cmd))
+        Flow()
+
     

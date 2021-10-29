@@ -56,7 +56,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
         # # wavx_syn = wavx_syn_input.read(shape=(d['nz'],d['nx'],d['nt']))
         # wavx_syn = wavx_syn_input.read(shape=())
 
-        def misfit(p, s='L2'):
+        def misfit(p, s='W2'):
                 global dist_hist
                 global d
                 t_big = time()
@@ -103,7 +103,10 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         # input(x_contrib_str)
                         # input(z_contrib_str)
                         #define tmp function to get floating value from string
-                        get_val = lambda x : float(eval(x.split(':')[-1]))
+                        #get_val = lambda x : float(eval(x.split(':')[-1]))
+                        def get_val(x):
+                                print('x=%s'%x)
+                                return float(eval(x.split(':')[-1]))
 
                         #increment dist_hist for next call
                         dist_hist += 1
@@ -148,87 +151,136 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 #                 print('(i,j) = (%s,%s,%s)'%(i,j,total_sum))
 
                 # return total_sum[0]
-
-        global callback_i
-        global curr_dict
-        callback_i = 0
-
-        def my_callback(xk):
+        
+        actual = False
+        if( actual ):
                 global callback_i
                 global curr_dict
-                curr_method = curr_dict['method']
-                curr_ini = curr_dict['init']
-                s = ''.join(80*['*']) + '\nIteration: %d\n'%callback_i
-                s = s + 'METHOD: %s\n'%curr_method
-                s = s + 'ini=%s, om=%f, TARGET=%s\n'%(curr_ini, misfit(curr_ini), [d['eszf'], d['esxf']])
-                s = s + '''xk = %s, misfit=%f\n'''%(xk, misfit(xk))
-                s = s + ''.join(80*['*']) + '\n'
-                print(s)
-                callback_i += 1
+                global point_guesses
+                global misfit_guesses
+                callback_i = 0
 
-        # methods = ['Nelder-Mead']
-        # ini = [[0.5, 1.0]]
+                point_guesses = []
+                misfit_guesses = []
 
-        # cases = []
-        # for meth in methods:
-        #         cases.append([])
-        #         for ini_curr in ini:
-        #                 cases[-1].append({'method': meth, 
-        #                         'init': ini_curr,
-        #                         'hist': [], 
-        #                         'misfit_hist': []})
+                def my_callback(xk):
+                        global callback_i
+                        global curr_dict
+                        global point_guesses
+                        global misfit_guesses
+                        curr_method = curr_dict['method']
+                        curr_ini = curr_dict['init']
+                        point_guesses.append(xk)
+                        misfit_guesses.append(misfit(xk))
+                        s = ''.join(80*['*']) + '\nIteration: %d\n'%callback_i
+                        s = s + 'METHOD: %s\n'%curr_method
+                        s = s + 'ini=%s, om=%f, TARGET=%s\n'%(curr_ini, misfit(curr_ini), [d['eszf'], d['esxf']])
+                        s = s + '''xk = %s, misfit=%f\n'''%(xk, misfit_guesses[-1])
+                        s = s + ''.join(80*['*']) + '\n'
+                        print(s)
+                        callback_i += 1
 
-        # for (m, meth) in enumerate(methods):
-        #         for (i, ini_curr) in enumerate(ini):
-        #                 curr_dict = cases[m][i]
-        #                 minimize(misfit, 
-        #                         ini_curr, 
-        #                         method=meth, 
-        #                         callback=my_callback,
-        #                         tol=1e-10)
-        #                 cases[m][i] = curr_dict
-        #                 callback_i = 0
-        nz = 10
-        nx = 10
-        sz = 0.3
-        ez = 0.7 
-        sx = 0.3
-        ex = 0.7
-        pz = np.linspace(sz, ez, nz)
-        px = np.linspace(sx,ex,nx)
-        Z,X = np.meshgrid(pz,px)
-        F = np.zeros(Z.shape)
-        G = np.zeros(Z.shape)
-        for i in range(len(pz)):
-                for j in range(len(px)):
-                        t = time()
-                        curr = [pz[i], px[j]]
-                        F[j][i] = misfit(curr)
-                        G[j][i] = misfit(curr, 'W2')
-                        t = time() - t
-                        print('(curr, L2misfit, W2, exec time) = (%s,%s,%s,%.4f)'%(curr, F[j][i], G[j][i], t))
+                methods = ['Nelder-Mead']
+                ini = [[0.5, 0.6]]
 
-        F = [[x if x != inf else 100.0 for x in e] for e in F]
-        F = np.array(F)
-        #input(F)
+                point_guesses.append(ini[0])
+                misfit_guesses.append(misfit(ini[0]))
+                cases = []
+                for meth in methods:
+                        cases.append([])
+                        for ini_curr in ini:
+                                cases[-1].append({'method': meth, 
+                                        'init': ini_curr,
+                                        'hist': [], 
+                                        'misfit_hist': []})
 
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        ax.contour3D(Z,X,F,cmap='viridis')
-        plt.title('L2 landscape')
-        plt.savefig('L2.png')
+                for (m, meth) in enumerate(methods):
+                        for (i, ini_curr) in enumerate(ini):
+                                curr_dict = cases[m][i]
+                                y = minimize(misfit, 
+                                        ini_curr, 
+                                        method=meth, 
+                                        callback=my_callback,
+                                        tol=1e-10,
+                                        options={'maxiter': 20})
+                                cases[m][i] = curr_dict
+                                callback_i = 0
+                print('Total time: %.4f'%(time() - t_big))
+                print('m in C = %.15f'%misfit([0.1, 0.9], 'C'))
+                print('m in Python = %f'%misfit([0.5,0.5], 'P'))
 
-        fig2 = plt.figure()
-        ax.contour(Z,X,G,cmap='viridis')
-        plt.title('W2 landscape')
-        plt.savefig('W2.png')
-        #print('Total time: %.4f'%(time() - t_big))
-        #print('m in C = %.15f'%misfit([0.1, 0.9], 'C'))
-        #print('m in Python = %f'%misfit([0.5,0.5], 'P'))
+                xx = [p[0] for p in point_guesses]
+                yy = [p[1] for p in point_guesses]
+                blue_channel = np.linspace(0.0, 1.0, len(xx))
+                red_channel = np.linspace(1.0, 0.0, len(xx))
+                C = [[red_channel[i], 0.0, blue_channel[i]] for i in range(len(blue_channel))]
+                print(C)
+                
+                plt.scatter(xx,yy, c=C)
+                plt.scatter(0.5,0.5,c=[0.0,1.0,0.0])
+                plt.title('Surface-only W2  (red first guess, blue last guess, green ideal)')
+                plt.savefig('scatter.png')
+                plt.clf()
+                plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
+                plt.title('Surface-only W2')
+                plt.ylabel('Misfit')
+                plt.xlabel('Iteration Number')
+                plt.savefig('misfit.png')
+        else:
+                nz = 25
+                nx = 25
+                sz = 0.1
+                ez = 0.9 
+                sx = 0.1
+                ex = 0.9
+                pz = np.linspace(sz, ez, nz)
+                px = np.linspace(sx,ex,nx)
+                Z,X = np.meshgrid(pz,px)
+                F = np.zeros(Z.shape)
+                G = np.zeros(Z.shape)
+                for i in range(len(pz)):
+                        for j in range(len(px)):
+                                t = time()
+                                curr = [pz[i], px[j]]
+                                # F[j][i] = misfit(curr)
+                                F[j][i] = misfit(curr)
+                                print('(j,i,x) = (%d,%d,%s)'%(j,i,curr), end='')
+                                G[j][i] = misfit(curr, 'W2')
+                                print('...misfit computed')
+                                t = time() - t
+                                print('(curr, L2misfit, W2, exec time) = (%s,%s,%s,%.4f)'%(curr, F[j][i], G[j][i], t))
 
+                F = [[x if x != inf else 100.0 for x in e] for e in F]
+                F = np.array(F)
+                #input(F)
+
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.contour3D(Z,X,F,cmap='viridis')
+                plt.title('L2 landscape')
+                plt.savefig('L2_contour.png')
+
+                fig2 = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.contour3D(Z,X,G,cmap='viridis')
+                plt.title('W2 landscape')
+                plt.savefig('W2_contour-full.png')
+
+                fig3 = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(Z,X,F,cmap='viridis')
+                plt.title('L2 landscape')
+                plt.savefig('L2_surface.png')
+
+                fig4 = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(Z,X,G,cmap='viridis')
+                plt.title('W2 landscape')
+                plt.savefig('W2_full.png')
 else:
         print('Synthetic data not generated yet. Try running "scons" again.')
 
-windowify(d, [11])
+#windowify(d, [11])
+print(y)
 
 End()

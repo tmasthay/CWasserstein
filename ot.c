@@ -187,6 +187,18 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
 
     y = sf_floatalloc(P);
 
+    float f_int=0.0, g_int=0.0;
+    int ii;
+    for(ii = 0; ii < N - 1; ii++){
+        float dx = x[ii+1] - x[ii];
+        float avgf = 0.5 * (f[ii+1] + f[ii]);
+        float avgg = 0.5 * (g[ii+1] + g[ii]);
+        f_int += dx * avgf;
+        g_int += dx * avgg;
+    }
+    float tol = 0.0;
+    if( f_int <= tol || g_int <= tol ) return 100.0;
+
     //transport(f, g, T, x, N);
     wass_int(y, f, g, x, p, N, P);
 
@@ -406,8 +418,8 @@ int main(int argc, char* argv[]){
     float distance;
     int np=10*nt;
     //distance = wass2tracesurfabs(f,g,t,nx,nt,np);
-    distance = wass2tracesurf(f,g,t,nx,nt,np);
-    //distance = wass2trace(f,g,t,nz,nx,nt,np);
+    //distance = wass2tracesurf(f,g,t,nx,nt,np);
+    distance = wass2trace(f,g,t,nz,nx,nt,np);
 
     float* distance_tmp;
     distance_tmp = sf_floatalloc(1);
