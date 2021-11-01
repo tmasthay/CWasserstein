@@ -12,6 +12,7 @@ from numpy import inf,nan
 from time import time
 from tmp import *
 from copy import *
+from gradients import *
 
 global dist_hist
 dist_hist = 0
@@ -20,7 +21,9 @@ global d
 d = {
         'case' : 'synthetic',
         'nz' : 100,
+        'dz' : 0.01,
         'nx' : 100,
+        'dx' : 0.01,
         'dt' :  5e-03,
         'nt' :  500,
         'sszf' :  0.5,
@@ -46,6 +49,9 @@ t = np.linspace(0.0, d['dt']*(d['nt']-1), d['nt'])
 SeqFlow('t',None,
         '''math output="x1" n1=%s d1=%.8f'''%(d['nt'], d['dt']))
 
+SeqFlow('x',None,
+        '''math output="x1" n1=%s d1=%.8f'''%(d['nx'], d['dx']))
+
 if( 'wavz_synthetic.rsf' in ls_out \
         and 'wavx_synthetic.rsf' in ls_out ):
         # wavz_syn_input = m8r.Input('wavz_synthetic.rsf')
@@ -57,6 +63,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
         # wavx_syn = wavx_syn_input.read(shape=())
 
         def misfit(p, s='W2'):
+                misfit_exec_time_start = time()
                 global dist_hist
                 global d
                 t_big = time()
@@ -93,6 +100,17 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 
                         SeqFlow(x_name, x_inputs, cmd)
                         SeqFlow(z_name, z_inputs, cmd)
+                        
+                        SeqFlow('trans_' + wxs, wxs, 'sftransp plane=23')
+                        SeqFlow('trans_' + wxs_ref, wxs_ref, 'sftransp plane=23')
+                        SeqFlow('trans_' + wzs, wzs, 'sftransp plane=23')
+                        SeqFlow('trans_' + wzs_ref, wzs_ref, 'sftransp plane=23')
+
+                        x_inputs_trans = '%s %s %s'%('trans_' + wxs, 'trans_' + wxs_ref, wass)
+                        z_inputs_trans = '%s %s %s'%('trans_' + wzs, 'trans_' + wzs_ref, wass)
+                        cmd2 = cmd.replace('t=t.rsf', 't=x.rsf')
+                        SeqFlow('trans_' + x_name, x_inputs_trans, cmd2)
+                        SeqFlow('trans_' + z_name, z_inputs_trans, cmd2)
 
                         #parse out wasserstein distance
                         x_contrib_str = co('sfdisfil < %s'%x_name, shell=True)
@@ -100,12 +118,15 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         z_contrib_str = co('sfdisfil < %s'%z_name, shell=True)
                         z_contrib_str = z_contrib_str.decode('utf-8')
 
+                        xct = co('sfdisfil < %s'%('trans_' + x_name), shell=True).decode('utf-8')
+                        zct = co('sfdisfil < %s'%('trans_' + z_name), shell=True).decode('utf-8')
+
                         # input(x_contrib_str)
                         # input(z_contrib_str)
                         #define tmp function to get floating value from string
                         #get_val = lambda x : float(eval(x.split(':')[-1]))
                         def get_val(x):
-                                print('x=%s'%x)
+                                #print('x=%s'%x)
                                 return float(eval(x.split(':')[-1]))
 
                         #increment dist_hist for next call
@@ -114,7 +135,15 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         #get contributions and return them
                         # if( 'C' in s ):
                         #         return get_val(x_contrib_str) + get_val(z_contrib_str)
-                        return get_val(x_contrib_str) + get_val(z_contrib_str)
+                        #return get_val(xct) + get_val(zct)
+                        print('%s\nMISFIT EXEC TIME: %f'%(''.join(80*['*']), time() - misfit_exec_time_start))
+                        option = 'time'
+                        if( option == 'both' ):
+                                return get_val(x_contrib_str) + get_val(z_contrib_str) + get_val(xct) + get_val(zct)
+                        elif( option == 'time' ):
+                                return get_val(x_contrib_str) + get_val(z_contrib_str)
+                        else:
+                                return get_val(xct) + get_val(zct)
                 else:
                         wxss = wxs.replace('.rsf','')
                         wzss = wzs.replace('.rsf','')
@@ -126,8 +155,8 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         get_top(wzss)
                         get_top(wxss_ref)
                         get_top(wzss_ref)
-                        SeqFlow('tmpx', '%s_top.rsf %s_top.rsf'%(wxss, wxss_ref), 'math output="input-y" y=${SOURCES[1]}', True)
-                        SeqFlow('tmpz', '%s_top.rsf %s_top.rsf'%(wzss, wzss_ref), 'math output="input-y" y=${SOURCES[1]}', True)
+                        SeqFlow('tmpx', '%s_top.rsf %s_top.rsf'%(wxss, wxss_ref), 'math output="input-y" y=${SOURCES[1]}')
+                        SeqFlow('tmpz', '%s_top.rsf %s_top.rsf'%(wzss, wzss_ref), 'math output="input-y" y=${SOURCES[1]}')
                         sx = extract(co('sfattr < tmpx.rsf', shell=True).decode('utf-8'))
                         sz = extract(co('sfattr < tmpz.rsf', shell=True).decode('utf-8'))
                         return sx**2 + sz**2
@@ -152,8 +181,9 @@ if( 'wavz_synthetic.rsf' in ls_out \
 
                 # return total_sum[0]
         
-        actual = False
+        actual = True
         if( actual ):
+                t_big = time()
                 global callback_i
                 global curr_dict
                 global point_guesses
@@ -164,28 +194,40 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 misfit_guesses = []
 
                 def my_callback(xk):
+                        start_time = time()
                         global callback_i
                         global curr_dict
                         global point_guesses
                         global misfit_guesses
                         curr_method = curr_dict['method']
                         curr_ini = curr_dict['init']
-                        point_guesses.append(xk)
-                        misfit_guesses.append(misfit(xk))
-                        s = ''.join(80*['*']) + '\nIteration: %d\n'%callback_i
-                        s = s + 'METHOD: %s\n'%curr_method
-                        s = s + 'ini=%s, om=%f, TARGET=%s\n'%(curr_ini, misfit(curr_ini), [d['eszf'], d['esxf']])
-                        s = s + '''xk = %s, misfit=%f\n'''%(xk, misfit_guesses[-1])
+                        #point_guesses.append(xk)
+                        #misfit_guesses.append(misfit(xk))
+                        s = 'Iteration: %d\n'%callback_i
+                        #s = s + 'METHOD: %s\n'%curr_method
+                        #s = s + 'ini=%s, om=%f, TARGET=%s\n'%(curr_ini, misfit(curr_ini), [d['eszf'], d['esxf']])
+                        #s = s + '''xk = %s, misfit=%.15f\n'''%(xk, misfit_guesses[-1])
+                        s = s + 'xk=%s\n'%xk
+                        s = s + 'CALLBACK_TIME=%f\n'%(time() - start_time)
                         s = s + ''.join(80*['*']) + '\n'
                         print(s)
                         callback_i += 1
 
+
+                z_ini = np.linspace(0.3,0.7,5)
+                x_ini = np.linspace(0.3,0.7,5)
+                
+                ini = [np.array(guess) for guess in cartesian_product(z_ini, x_ini)]
+                deriv_info = [[lambda x: numerical_deriv(x,misfit,0.05), lambda x: numerical_hessian(x,misfit,0.05)]]
+
                 methods = ['Nelder-Mead']
-                ini = [[0.5, 0.6]]
+
+                final_answers = []
 
                 point_guesses.append(ini[0])
                 misfit_guesses.append(misfit(ini[0]))
                 cases = []
+                y = 1.0
                 for meth in methods:
                         cases.append([])
                         for ini_curr in ini:
@@ -194,20 +236,31 @@ if( 'wavz_synthetic.rsf' in ls_out \
                                         'hist': [], 
                                         'misfit_hist': []})
 
+                last_time = time()
                 for (m, meth) in enumerate(methods):
                         for (i, ini_curr) in enumerate(ini):
                                 curr_dict = cases[m][i]
+                                money_signs = ''.join(80 * ['$'])
+                                s = '%s\nSTARTING ITERATION: (%d, %d) of (%d, %d)\n'%(money_signs, m,i,len(methods), len(ini))
+                                s = s + 'LAST ITERATION TOOK %f seconds.\n%s'%(time() - last_time, money_signs)
+                                print(s)
+                                last_time = time()
                                 y = minimize(misfit, 
                                         ini_curr, 
                                         method=meth, 
                                         callback=my_callback,
-                                        tol=1e-10,
+                                        tol=0.0,
+                                        jac=deriv_info[i][0],
+                                        hess=deriv_info[i][1],
                                         options={'maxiter': 20})
                                 cases[m][i] = curr_dict
+                                final_answers[i] = y['x']
                                 callback_i = 0
+
                 print('Total time: %.4f'%(time() - t_big))
-                print('m in C = %.15f'%misfit([0.1, 0.9], 'C'))
-                print('m in Python = %f'%misfit([0.5,0.5], 'P'))
+                print('y = %s'%y)
+                #print('m in C = %.15f'%misfit([0.1, 0.9], 'C'))
+                #print('m in Python = %f'%misfit([0.5,0.5], 'P'))
 
                 xx = [p[0] for p in point_guesses]
                 yy = [p[1] for p in point_guesses]
@@ -215,24 +268,42 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 red_channel = np.linspace(1.0, 0.0, len(xx))
                 C = [[red_channel[i], 0.0, blue_channel[i]] for i in range(len(blue_channel))]
                 print(C)
+
+                ref_pt = [d['eszf'], d['esxf']]
+                far_off = [np.linalg.norm(ref_pt - guess) for guess in final_answers]
                 
-                plt.scatter(xx,yy, c=C)
-                plt.scatter(0.5,0.5,c=[0.0,1.0,0.0])
-                plt.title('Surface-only W2  (red first guess, blue last guess, green ideal)')
-                plt.savefig('scatter.png')
+                Z,X = np.meshgrid(z_ini,x_ini)
+
+                fig3 = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(Z,X,far_off.reshape((len(z_ini),len(x_ini))),cmap='viridis')
+                plt.title('Error versus Initial Guess')
+                plt.xlabel('X_initial')
+                plt.ylabel('Y_initial')
+                plt.zlabel('Final Error')
+                plt.savefig('guesses.png')
                 plt.clf()
-                plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
-                plt.title('Surface-only W2')
-                plt.ylabel('Misfit')
-                plt.xlabel('Iteration Number')
-                plt.savefig('misfit.png')
+
+                # plt.scatter(xx,yy, color=C)
+                # plt.scatter(0.5,0.5,color=[0.0,1.0,0.0])
+                # plt.title('Surface-only W2  (red first guess, blue last guess, green ideal)')
+                # plt.savefig('scatter.png')
+                # plt.clf()
+                # plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
+                # plt.title('Surface-only W2')
+                # plt.ylabel('Misfit')
+                # plt.xlabel('Iteration Number')
+                # plt.savefig('misfit.png')
+
+                # plt.clf()
+                # plt.figure()
         else:
                 nz = 25
                 nx = 25
-                sz = 0.1
-                ez = 0.9 
-                sx = 0.1
-                ex = 0.9
+                sz = 0.3
+                ez = 0.7 
+                sx = 0.3
+                ex = 0.7
                 pz = np.linspace(sz, ez, nz)
                 px = np.linspace(sx,ex,nx)
                 Z,X = np.meshgrid(pz,px)
@@ -243,44 +314,45 @@ if( 'wavz_synthetic.rsf' in ls_out \
                                 t = time()
                                 curr = [pz[i], px[j]]
                                 # F[j][i] = misfit(curr)
-                                F[j][i] = misfit(curr)
+                                #F[j][i] = misfit(curr, 'L2')
                                 print('(j,i,x) = (%d,%d,%s)'%(j,i,curr), end='')
                                 G[j][i] = misfit(curr, 'W2')
                                 print('...misfit computed')
                                 t = time() - t
                                 print('(curr, L2misfit, W2, exec time) = (%s,%s,%s,%.4f)'%(curr, F[j][i], G[j][i], t))
 
-                F = [[x if x != inf else 100.0 for x in e] for e in F]
-                F = np.array(F)
+                G = [[x if x not in [inf, nan] else 200.0 for x in e] for e in G]
+                G = [[x if x <= 199.0 else 200.0 for x in e] for e in G]
+                G = np.array(G)
                 #input(F)
 
-                fig = plt.figure()
-                ax = plt.axes(projection='3d')
-                ax.contour3D(Z,X,F,cmap='viridis')
-                plt.title('L2 landscape')
-                plt.savefig('L2_contour.png')
+                # fig = plt.figure()
+                # ax = plt.axes(projection='3d')
+                # ax.contour3D(Z,X,F,cmap='viridis')
+                # plt.title('L2 landscape')
+                # plt.savefig('L2landscape-global-contour.png')
 
-                fig2 = plt.figure()
-                ax = plt.axes(projection='3d')
-                ax.contour3D(Z,X,G,cmap='viridis')
-                plt.title('W2 landscape')
-                plt.savefig('W2_contour-full.png')
+                # fig2 = plt.figure()
+                # ax = plt.axes(projection='3d')
+                # ax.contour3D(Z,X,G,cmap='viridis')
+                # plt.title('W2 landscape')
+                # plt.savefig('W2landscape-surfaceOnly-contour.png')
 
                 fig3 = plt.figure()
                 ax = plt.axes(projection='3d')
                 ax.plot_surface(Z,X,F,cmap='viridis')
                 plt.title('L2 landscape')
-                plt.savefig('L2_surface.png')
+                plt.savefig('L2landscape-global.png')
 
                 fig4 = plt.figure()
                 ax = plt.axes(projection='3d')
                 ax.plot_surface(Z,X,G,cmap='viridis')
                 plt.title('W2 landscape')
-                plt.savefig('W2_full.png')
+                plt.savefig('W2landscape-surfaceOnly.png')
 else:
         print('Synthetic data not generated yet. Try running "scons" again.')
 
 #windowify(d, [11])
-print(y)
+#print(y)
 
 End()

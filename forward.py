@@ -13,8 +13,8 @@ def  forward(d):
     n1 = d['nz']
     n2 = d['nx']
     n3 = d['nt']
-    d1 = 1.0 / n1
-    d2 = 1.0 / n2
+    d1 = d['dz']
+    d2 = d['dx']
     d3 = d['dt']
 
     #elastic physics
@@ -75,7 +75,7 @@ def  forward(d):
     create_field(vs, 'vs', get_field('vp'))
     create_field(rho, 'rho')
     SeqFlow(combine(['wavz','wavx']), combine(['vp', 'vs', 'rho']) + ' ' + elas,
-        fc, True)
+        fc)
 
 def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
     muz = mu[0]
@@ -109,6 +109,5 @@ def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
         curr = get_curr(t)
         output_name = 'test_%.4e'%t
         Flow(output_name, None, 'math output="%s" %s'%(curr,tail_cmd))
-        Flow()
 
     

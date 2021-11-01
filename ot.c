@@ -348,6 +348,19 @@ float wass2tracesurfabs(float*** f, float*** g, float* t, int nx, int nt, int np
     return wass2tracesliceabs(f, g, t, slice, 1, nx, nt, np);
 }
 
+float l2surf(float*** f, float*** g, int nx, int nt){
+    float sum=0.0;
+    
+    int ix,it;
+    for(ix = 0; ix < nx; ix++){
+        for(it = 0; it < nt; it++){
+            float diff = f[0][ix][it] - g[0][ix][it];
+            sum += diff * diff;
+        }
+    }
+    return sum;
+}
+
 int main(int argc, char* argv[]){
     //assume structured grid
     int nz, nx, nt, nt_true, nz_check, nx_check, nt_check;
@@ -419,7 +432,8 @@ int main(int argc, char* argv[]){
     int np=10*nt;
     //distance = wass2tracesurfabs(f,g,t,nx,nt,np);
     //distance = wass2tracesurf(f,g,t,nx,nt,np);
-    distance = wass2trace(f,g,t,nz,nx,nt,np);
+    //distance = wass2trace(f,g,t,nz,nx,nt,np);
+    distance = l2surf(f,g,nx,nt);
 
     float* distance_tmp;
     distance_tmp = sf_floatalloc(1);
