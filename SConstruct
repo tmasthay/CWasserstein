@@ -222,7 +222,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
 
                 methods = ['Nelder-Mead']
 
-                final_answers = []
+                final_answers = np.zeros(len(ini))
 
                 point_guesses.append(ini[0])
                 misfit_guesses.append(misfit(ini[0]))
@@ -256,6 +256,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
                                 cases[m][i] = curr_dict
                                 final_answers[i] = y['x']
                                 callback_i = 0
+                                os.system('rm *.rsf')
 
                 print('Total time: %.4f'%(time() - t_big))
                 print('y = %s'%y)
@@ -277,7 +278,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 fig3 = plt.figure()
                 ax = plt.axes(projection='3d')
                 ax.plot_surface(Z,X,far_off.reshape((len(z_ini),len(x_ini))),cmap='viridis')
-                plt.title('Error versus Initial Guess')
+                plt.title('Error versus Initial Guess: L2 surface')
                 plt.xlabel('X_initial')
                 plt.ylabel('Y_initial')
                 plt.zlabel('Final Error')
