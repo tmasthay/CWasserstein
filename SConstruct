@@ -12,9 +12,17 @@ from numpy import inf,nan
 from time import time
 from copy import *
 from gradients import *
+from plotall import plot_all
+
+def SeqFlowLocal(output_files, input_files, cmd):
+        verbose = True
+        SeqFlow(output_files, input_files, cmd, verbose)
 
 global dist_hist
 dist_hist = 0
+
+global wass_hist
+wass_hist = []
 
 global d
 d = {
@@ -31,7 +39,7 @@ d = {
         'esxf' :  0.5,
         'nsz' :  1,
         'nsx' :  1,
-        'nb' : 30,
+        'nb' : 35,
         'fm' : 5.0
 }
 
@@ -45,10 +53,10 @@ ls_out = co('ls', shell=True).decode('utf-8')
 
 t = np.linspace(0.0, d['dt']*(d['nt']-1), d['nt'])
 
-SeqFlow('t',None,
+SeqFlowLocal('t',None,
         '''math output="x1" n1=%s d1=%.8f'''%(d['nt'], d['dt']))
 
-SeqFlow('x',None,
+SeqFlowLocal('x',None,
         '''math output="x1" n1=%s d1=%.8f'''%(d['nx'], d['dx']))
 
 os.system('cp t.rsf tmpt.txt')
@@ -72,6 +80,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 misfit_exec_time_start = time()
                 global dist_hist
                 global d
+                global wass_hist
                 t_big = time()
                 z0 = p[0]
                 x0 = p[1]
@@ -100,41 +109,71 @@ if( 'wavz_synthetic.rsf' in ls_out \
 
                 if( 'W' in s ):
                         def get_val(x):
-                                #print('x=%s'%x)
+                                print('x=%s'%x)
                                 return float(eval(x.split(':')[-1]))
                         dist_hist += 1
 
-                        option = 'space'
+                        option = 'time'
                         sum = 0.0
                         cmd = '''./${SOURCES[2]} g=${SOURCES[1]} t=t.rsf'''
+                        hrt = True
                         if( option in ['time', 'both'] ):
-                                #build commands: note command for z and x is the same
-                                x_name = 'distx_%s.rsf'%dist_hist
-                                z_name = 'distz_%s.rsf'%dist_hist
-                                x_inputs = '%s %s %s'%(wxs, wxs_ref, wass)
-                                z_inputs = '%s %s %s'%(wzs, wzs_ref, wass)
-                                SeqFlow(x_name, x_inputs, cmd)
-                                SeqFlow(z_name, z_inputs, cmd)
+                                if( hrt ):
+                                        hrt_v0=0.5
+                                        hrt_dv=0.01
+                                        hrt_cmd = 'veltran adj=y v0=%.8f dv=%.8f | put n1=500 d1=0.005'%(hrt_v0, hrt_dv)
+                                        hrt = lambda x : x.replace('.rsf','_hrt.rsf')
+                                        SeqFlowLocal(hrt(wxs), wxs, hrt_cmd)
+                                        SeqFlowLocal(hrt(wzs), wzs, hrt_cmd)
 
-                                #parse out wasserstein distance
-                                sum += get_val(co('sfdisfil < %s'%x_name, shell=True).decode('utf-8'))
-                                sum += get_val(co('sfdisfil < %s'%z_name, shell=True).decode('utf-8'))
+                                        if( not os.path.exists(hrt(wzs_ref)) ):
+                                                SeqFlowLocal(hrt(wxs_ref), wxs_ref, hrt_cmd)
+                                                SeqFlowLocal(hrt(wzs_ref), wzs_ref, hrt_cmd)
+                                                y = co('cat %s'%hrt(wxs_ref), shell=True).decode('utf-8').split('git')[-1].split('\t')
+                                                y = [yy.replace('\n','') for yy in y if '=' in yy]
+                                                y = [yy for yy in y if yy.split('=')[0] in ['n2', 'o2', 'd2']]
+                                                y = ' '.join(y)
+                                                print(y)
+                                        
+                                        x_name = 'distx_%s.rsf'%dist_hist
+                                        z_name = 'distz_%s.rsf'%dist_hist
+                                        x_name = hrt(x_name)
+                                        z_name = hrt(z_name)
+                                        x_inputs = '%s %s %s'%(hrt(wxs), hrt(wxs_ref), wass)
+                                        z_inputs = '%s %s %s'%(hrt(wzs), hrt(wzs_ref), wass)
+                                        SeqFlowLocal(x_name, x_inputs, cmd)
+                                        SeqFlowLocal(z_name, z_inputs, cmd)
+                                        sum += get_val(co('sfdisfil < %s'%x_name, shell=True).decode('utf-8'))
+                                        sum += get_val(co('sfdisfil < %s'%z_name, shell=True).decode('utf-8'))
+                                else:
+                                        #build commands: note command for z and x is the same
+                                        x_name = 'distx_%s.rsf'%dist_hist
+                                        z_name = 'distz_%s.rsf'%dist_hist
+                                        x_inputs = '%s %s %s'%(wxs, wxs_ref, wass)
+                                        z_inputs = '%s %s %s'%(wzs, wzs_ref, wass)
+                                        SeqFlowLocal(x_name, x_inputs, cmd)
+                                        SeqFlowLocal(z_name, z_inputs, cmd)
+
+                                        #parse out wasserstein distance
+                                        sum += get_val(co('sfdisfil < %s'%x_name, shell=True).decode('utf-8'))
+                                        sum += get_val(co('sfdisfil < %s'%z_name, shell=True).decode('utf-8'))
                         if( option in ['space', 'both'] ):
                                 x_name = 'distx_%s.rsf'%dist_hist
                                 z_name = 'distz_%s.rsf'%dist_hist
-                                SeqFlow('trans_' + wxs, wxs, 'sftransp plane=23')
-                                SeqFlow('trans_' + wxs_ref, wxs_ref, 'sftransp plane=23')
-                                SeqFlow('trans_' + wzs, wzs, 'sftransp plane=23')
-                                SeqFlow('trans_' + wzs_ref, wzs_ref, 'sftransp plane=23')
+                                SeqFlowLocal('trans_' + wxs, wxs, 'sftransp plane=23')
+                                SeqFlowLocal('trans_' + wxs_ref, wxs_ref, 'sftransp plane=23')
+                                SeqFlowLocal('trans_' + wzs, wzs, 'sftransp plane=23')
+                                SeqFlowLocal('trans_' + wzs_ref, wzs_ref, 'sftransp plane=23')
                                 x_inputs_trans = '%s %s %s'%('trans_' + wxs, 'trans_' + wxs_ref, wass)
                                 z_inputs_trans = '%s %s %s'%('trans_' + wzs, 'trans_' + wzs_ref, wass)
                                 cmd2 = cmd.replace('t=t.rsf', 't=x.rsf')
-                                SeqFlow('trans_' + x_name, x_inputs_trans, cmd2)
-                                SeqFlow('trans_' + z_name, z_inputs_trans, cmd2)
+                                SeqFlowLocal('trans_' + x_name, x_inputs_trans, cmd2)
+                                SeqFlowLocal('trans_' + z_name, z_inputs_trans, cmd2)
                                 sum += get_val(co('sfdisfil < %s'%('trans_' + x_name), shell=True).decode('utf-8'))
                                 sum += get_val(co('sfdisfil < %s'%('trans_' + z_name), shell=True).decode('utf-8'))
 
-                        print('%s\nMISFIT EXEC TIME: %f\nx=%s, misfit=%f'%(''.join(80*['*']), time() - misfit_exec_time_start, p, sum))
+                        print('%s\nMISFIT EXEC TIME: %f\nx=%s, misfit=%.16f'%(''.join(80*['*']), time() - misfit_exec_time_start, p, sum))
+                        wass_hist.append(sum)
                         return sum
                 else:
                         print('Branch should not exist')
@@ -143,14 +182,14 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         # wzss = wzs.replace('.rsf','')
                         # wxss_ref = wxs_ref.replace('.rsf','')
                         # wzss_ref = wzs_ref.replace('.rsf','')
-                        # get_top = lambda x : SeqFlow('%s_top.rsf'%x, x + '.rsf', 'window n1=1 f1=0 | put o3=0', True)
+                        # get_top = lambda x : SeqFlowLocal('%s_top.rsf'%x, x + '.rsf', 'window n1=1 f1=0 | put o3=0', True)
                         extract = lambda x : float([y for y in x.split('\n') if 'norm' in y][0].split('=')[1])
                         # get_top(wxss)
                         # get_top(wzss)
                         # get_top(wxss_ref)
                         # get_top(wzss_ref)
-                        SeqFlow('tmpx.rsf', '%s %s'%(wxs, wxs_ref), 'math output="input-y" y=${SOURCES[1]}')
-                        SeqFlow('tmpz.rsf', '%s %s'%(wzs, wzs_ref), 'math output="input-y" y=${SOURCES[1]}')
+                        SeqFlowLocal('tmpx.rsf', '%s %s'%(wxs, wxs_ref), 'math output="input-y" y=${SOURCES[1]}')
+                        SeqFlowLocal('tmpz.rsf', '%s %s'%(wzs, wzs_ref), 'math output="input-y" y=${SOURCES[1]}')
                         sx = extract(co('sfattr < tmpx.rsf', shell=True).decode('utf-8'))
                         sz = extract(co('sfattr < tmpz.rsf', shell=True).decode('utf-8'))
                         return sx**2 + sz**2
@@ -196,7 +235,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         curr_method = curr_dict['method']
                         curr_ini = curr_dict['init']
                         point_guesses.append(xk)
-                        misfit_guesses.append(misfit(xk))
+                        #misfit_guesses.append(misfit(xk))
                         s = 'Iteration: %d\n'%callback_i
                         #s = s + 'METHOD: %s\n'%curr_method
                         #s = s + 'ini=%s, om=%f, TARGET=%s\n'%(curr_ini, misfit(curr_ini), [d['eszf'], d['esxf']])
@@ -218,7 +257,7 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 ini = [np.array(guess) for guess in cartesian_product(z_ini, x_ini)]
                 converge_error = False
                 if( not converge_error ):
-                        ini = [[0.6,0.7]]
+                        ini = [[0.5, 0.6]]
 
                 deriv_info = len(ini) * ([[lambda x: numerical_deriv(x,misfit,0.1), lambda x: numerical_hessian(x,misfit,0.1)]])
                 methods = ['Nelder-Mead']
@@ -257,13 +296,13 @@ if( 'wavz_synthetic.rsf' in ls_out \
                                 cases[m][i] = curr_dict
                                 final_answers.append(y['x'])
                                 callback_i = 0
-                                os.system('''rm $(ls *.rsf | grep -v "synthetic")''')
-                                os.system('''rm $(ls /var/tmp/[a-zA-Z][a-zA-Z]*.rsf@ | grep -v "synthetic")''')
-                                os.system('''rm $(ls /var/tmp/[v]*.rsf@ | grep -v "synthetic")''')
-                                os.system('cp tmpt.txt t.rsf')
-                                os.system('cp tmpx.txt x.rsf')
-                                os.system('cp /var/tmp/tmpt.txt /var/tmp/t.rsf@')
-                                os.system('cp /var/tmp/tmpx.txt /var/tmp/x.rsf@')
+                                # os.system('''rm $(ls *.rsf | grep -v "synthetic")''')
+                                # os.system('''rm $(ls /var/tmp/[a-zA-Z][a-zA-Z]*.rsf@ | grep -v "synthetic")''')
+                                # os.system('''rm $(ls /var/tmp/[v]*.rsf@ | grep -v "synthetic")''')
+                                # os.system('cp tmpt.txt t.rsf')
+                                # os.system('cp tmpx.txt x.rsf')
+                                # os.system('cp /var/tmp/tmpt.txt /var/tmp/t.rsf@')
+                                # os.system('cp /var/tmp/tmpx.txt /var/tmp/x.rsf@')
 
                 print('Total time: %.4f'%(time() - t_big))
                 print('y = %s'%y)
@@ -277,34 +316,39 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 C = [[red_channel[i], 0.0, blue_channel[i]] for i in range(len(blue_channel))]
                 print(C)
 
-                if( converge_error ):
-                        ref_pt = [d['eszf'], d['esxf']]
-                        far_off = [np.linalg.norm(ref_pt - guess) for guess in final_answers]
-                        far_off = np.array(far_off)
-                        
-                        Z,X = np.meshgrid(z_ini,x_ini)
+                plot_all(wass_hist)
+                os.system('rm *.rsf')
 
-                        fig3 = plt.figure()
-                        ax = plt.axes(projection='3d')
-                        ax.plot_surface(Z,X,far_off.reshape((len(z_ini),len(x_ini))),cmap='viridis')
-                        plt.title('Error versus Initial Guess: L2 surface')
-                        plt.xlabel('X_initial')
-                        plt.ylabel('Y_initial')
-                        #plt.zlabel('Final Error')
-                        plt.savefig('guesses.png')
-                        plt.clf()
+                if( converge_error ):
+                        print('yo')
+                        # ref_pt = [d['eszf'], d['esxf']]
+                        # far_off = [np.linalg.norm(ref_pt - guess) for guess in final_answers]
+                        # far_off = np.array(far_off)
+                        
+                        # Z,X = np.meshgrid(z_ini,x_ini)
+
+                        # fig3 = plt.figure()
+                        # ax = plt.axes(projection='3d')
+                        # ax.plot_surface(Z,X,far_off.reshape((len(z_ini),len(x_ini))),cmap='viridis')
+                        # plt.title('Error versus Initial Guess: L2 surface')
+                        # plt.xlabel('X_initial')
+                        # plt.ylabel('Y_initial')
+                        # #plt.zlabel('Final Error')
+                        # plt.savefig('guesses.png')
+                        # plt.clf()
 
                 else:
-                        plt.scatter(xx,yy, color=C)
-                        plt.scatter(0.5,0.5,color=[0.0,1.0,0.0])
-                        plt.title('Surface-only L2  (red first guess, blue last guess, green ideal)')
-                        plt.savefig('scatter.png')
-                        plt.clf()
-                        plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
-                        plt.title('Surface-only L2')
-                        plt.ylabel('Misfit')
-                        plt.xlabel('Iteration Number')
-                        plt.savefig('misfit.png')
+                        print('yo')
+                        # plt.scatter(xx,yy, color=C)
+                        # plt.scatter(0.5,0.5,color=[0.0,1.0,0.0])
+                        # plt.title('Surface-only L2  (red first guess, blue last guess, green ideal)')
+                        # plt.savefig('scatter.png')
+                        # plt.clf()
+                        # plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
+                        # plt.title('Surface-only L2')
+                        # plt.ylabel('Misfit')
+                        # plt.xlabel('Iteration Number')
+                        # plt.savefig('misfit.png')
 
                 # plt.clf()
                 # plt.figure()

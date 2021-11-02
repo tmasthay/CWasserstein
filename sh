@@ -28,7 +28,10 @@ output_name=tmp
 full_input_ref=wavz_synthetic
 full_input_ref_top=top_syn
 
-full_input_test=wavz_0.3000_0.3000
+z_coord="0.73757813"
+x_coord="0.2240625"
+tmp1="$z_coord-$x_coord"
+full_input_test="wavz_$tmp1"
 full_input_test_top=top_upperleft
 
 pdf_output_name=bigpdf
@@ -43,6 +46,8 @@ echo "full_args = $full_args"
 
 sfwindow n1=1 f1=0 n2=1 f2=10 < $full_input_ref.rsf | sfput n1=1 n2=1 n3=$1 > $full_input_ref_top.rsf
 sfwindow n1=1 f1=0 n2=1 f2=10 < $full_input_test.rsf | sfput n1=1 n2=1 n3=$1 > $full_input_test_top.rsf
+
+echo "./ot.exe $full_args < $input_name.rsf > $output_name.rsf"
 
 #./ot.exe g=top_upperleft.rsf t=t.rsf p=p.rsf f_cdfpos=F_pos.rsf f_cdfneg=F_neg.rsf g_cdfpos=G_pos.rsf g_cdfneg=G_neg.rsf ff=f.rsf fneg=fneg.rsf fpos=fpos.rsf gg=g.rsf gpos=gpos.rsf gneg=gneg.rsf qfpos=qfpos.rsf qfneg=qfneg.rsf qgpos=qgpos.rsf qgneg=qgneg.rsf < top_syn.rsf > tmp.rsf
 
