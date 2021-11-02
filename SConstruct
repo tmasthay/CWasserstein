@@ -10,7 +10,6 @@ from seqflow import *
 from itertools import product as cartesian_product
 from numpy import inf,nan
 from time import time
-from tmp import *
 from copy import *
 from gradients import *
 
@@ -52,6 +51,11 @@ SeqFlow('t',None,
 SeqFlow('x',None,
         '''math output="x1" n1=%s d1=%.8f'''%(d['nx'], d['dx']))
 
+os.system('cp t.rsf tmpt.txt')
+os.system('cp x.rsf tmpx.txt')
+os.system('cp /var/tmp/t.rsf@ /var/tmp/tmpt.txt')
+os.system('cp /var/tmp/x.rsf@ /var/tmp/tmpx.txt')
+
 if( 'wavz_synthetic.rsf' in ls_out \
         and 'wavx_synthetic.rsf' in ls_out ):
         # wavz_syn_input = m8r.Input('wavz_synthetic.rsf')
@@ -63,6 +67,8 @@ if( 'wavz_synthetic.rsf' in ls_out \
         # wavx_syn = wavx_syn_input.read(shape=())
 
         def misfit(p, s='W2'):
+                if( min(p) <= 0.0 or max(p) >= 1.0 ):
+                        return 1e10
                 misfit_exec_time_start = time()
                 global dist_hist
                 global d
@@ -139,24 +145,30 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         print('%s\nMISFIT EXEC TIME: %f'%(''.join(80*['*']), time() - misfit_exec_time_start))
                         option = 'time'
                         if( option == 'both' ):
-                                return get_val(x_contrib_str) + get_val(z_contrib_str) + get_val(xct) + get_val(zct)
+                                the_val = get_val(x_contrib_str) + get_val(z_contrib_str) + get_val(xct) + get_val(zct)
+                                print('x=%s,misfit=%f'%(p, the_val))
+                                return the_val
                         elif( option == 'time' ):
-                                return get_val(x_contrib_str) + get_val(z_contrib_str)
+                                the_val = get_val(x_contrib_str) + get_val(z_contrib_str)
+                                print('x=%s,misfit=%f'%(p, the_val))
+                                return the_val
                         else:
-                                return get_val(xct) + get_val(zct)
+                                the_val = get_val(xct) + get_val(zct)
+                                print('x=%s,misfit=%f'%(p, the_val))
+                                return the_val
                 else:
-                        wxss = wxs.replace('.rsf','')
-                        wzss = wzs.replace('.rsf','')
-                        wxss_ref = wxs_ref.replace('.rsf','')
-                        wzss_ref = wzs_ref.replace('.rsf','')
-                        get_top = lambda x : SeqFlow('%s_top.rsf'%x, x + '.rsf', 'window n1=1 f1=0 | put o3=0', True)
+                        # wxss = wxs.replace('.rsf','')
+                        # wzss = wzs.replace('.rsf','')
+                        # wxss_ref = wxs_ref.replace('.rsf','')
+                        # wzss_ref = wzs_ref.replace('.rsf','')
+                        # get_top = lambda x : SeqFlow('%s_top.rsf'%x, x + '.rsf', 'window n1=1 f1=0 | put o3=0', True)
                         extract = lambda x : float([y for y in x.split('\n') if 'norm' in y][0].split('=')[1])
-                        get_top(wxss)
-                        get_top(wzss)
-                        get_top(wxss_ref)
-                        get_top(wzss_ref)
-                        SeqFlow('tmpx', '%s_top.rsf %s_top.rsf'%(wxss, wxss_ref), 'math output="input-y" y=${SOURCES[1]}')
-                        SeqFlow('tmpz', '%s_top.rsf %s_top.rsf'%(wzss, wzss_ref), 'math output="input-y" y=${SOURCES[1]}')
+                        # get_top(wxss)
+                        # get_top(wzss)
+                        # get_top(wxss_ref)
+                        # get_top(wzss_ref)
+                        SeqFlow('tmpx.rsf', '%s %s'%(wxs, wxs_ref), 'math output="input-y" y=${SOURCES[1]}')
+                        SeqFlow('tmpz.rsf', '%s %s'%(wzs, wzs_ref), 'math output="input-y" y=${SOURCES[1]}')
                         sx = extract(co('sfattr < tmpx.rsf', shell=True).decode('utf-8'))
                         sz = extract(co('sfattr < tmpz.rsf', shell=True).decode('utf-8'))
                         return sx**2 + sz**2
@@ -201,8 +213,8 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         global misfit_guesses
                         curr_method = curr_dict['method']
                         curr_ini = curr_dict['init']
-                        #point_guesses.append(xk)
-                        #misfit_guesses.append(misfit(xk))
+                        point_guesses.append(xk)
+                        misfit_guesses.append(misfit(xk))
                         s = 'Iteration: %d\n'%callback_i
                         #s = s + 'METHOD: %s\n'%curr_method
                         #s = s + 'ini=%s, om=%f, TARGET=%s\n'%(curr_ini, misfit(curr_ini), [d['eszf'], d['esxf']])
@@ -214,15 +226,20 @@ if( 'wavz_synthetic.rsf' in ls_out \
                         callback_i += 1
 
 
-                z_ini = np.linspace(0.3,0.7,5)
-                x_ini = np.linspace(0.3,0.7,5)
+                nz_ini = 15
+                nx_ini = 15
+                num_iter = 20
+                tau = 0.0
+                z_ini = np.linspace(0.3,0.7,nz_ini)
+                x_ini = np.linspace(0.3,0.7,nx_ini)
                 
                 ini = [np.array(guess) for guess in cartesian_product(z_ini, x_ini)]
-                deriv_info = [[lambda x: numerical_deriv(x,misfit,0.05), lambda x: numerical_hessian(x,misfit,0.05)]]
+                #ini = [[0.5, 0.8]]
+                deriv_info = len(ini) * ([[lambda x: numerical_deriv(x,misfit,0.1), lambda x: numerical_hessian(x,misfit,0.1)]])
 
                 methods = ['Nelder-Mead']
 
-                final_answers = np.zeros(len(ini))
+                final_answers = []
 
                 point_guesses.append(ini[0])
                 misfit_guesses.append(misfit(ini[0]))
@@ -249,14 +266,20 @@ if( 'wavz_synthetic.rsf' in ls_out \
                                         ini_curr, 
                                         method=meth, 
                                         callback=my_callback,
-                                        tol=0.0,
+                                        tol=tau,
                                         jac=deriv_info[i][0],
                                         hess=deriv_info[i][1],
-                                        options={'maxiter': 20})
+                                        options={'maxiter': num_iter})
                                 cases[m][i] = curr_dict
-                                final_answers[i] = y['x']
+                                final_answers.append(y['x'])
                                 callback_i = 0
-                                os.system('rm *.rsf')
+                                os.system('''rm $(ls *.rsf | grep -v "synthetic")''')
+                                os.system('''rm $(ls /var/tmp/[a-zA-Z][a-zA-Z]*.rsf@ | grep -v "synthetic")''')
+                                os.system('''rm $(ls /var/tmp/[v]*.rsf@ | grep -v "synthetic")''')
+                                os.system('cp tmpt.txt t.rsf')
+                                os.system('cp tmpx.txt x.rsf')
+                                os.system('cp /var/tmp/tmpt.txt /var/tmp/t.rsf@')
+                                os.system('cp /var/tmp/tmpx.txt /var/tmp/x.rsf@')
 
                 print('Total time: %.4f'%(time() - t_big))
                 print('y = %s'%y)
@@ -270,31 +293,35 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 C = [[red_channel[i], 0.0, blue_channel[i]] for i in range(len(blue_channel))]
                 print(C)
 
-                ref_pt = [d['eszf'], d['esxf']]
-                far_off = [np.linalg.norm(ref_pt - guess) for guess in final_answers]
-                
-                Z,X = np.meshgrid(z_ini,x_ini)
+                converge_error = True
+                if( converge_error ):
+                        ref_pt = [d['eszf'], d['esxf']]
+                        far_off = [np.linalg.norm(ref_pt - guess) for guess in final_answers]
+                        far_off = np.array(far_off)
+                        
+                        Z,X = np.meshgrid(z_ini,x_ini)
 
-                fig3 = plt.figure()
-                ax = plt.axes(projection='3d')
-                ax.plot_surface(Z,X,far_off.reshape((len(z_ini),len(x_ini))),cmap='viridis')
-                plt.title('Error versus Initial Guess: L2 surface')
-                plt.xlabel('X_initial')
-                plt.ylabel('Y_initial')
-                plt.zlabel('Final Error')
-                plt.savefig('guesses.png')
-                plt.clf()
+                        fig3 = plt.figure()
+                        ax = plt.axes(projection='3d')
+                        ax.plot_surface(Z,X,far_off.reshape((len(z_ini),len(x_ini))),cmap='viridis')
+                        plt.title('Error versus Initial Guess: L2 surface')
+                        plt.xlabel('X_initial')
+                        plt.ylabel('Y_initial')
+                        #plt.zlabel('Final Error')
+                        plt.savefig('guesses.png')
+                        plt.clf()
 
-                # plt.scatter(xx,yy, color=C)
-                # plt.scatter(0.5,0.5,color=[0.0,1.0,0.0])
-                # plt.title('Surface-only W2  (red first guess, blue last guess, green ideal)')
-                # plt.savefig('scatter.png')
-                # plt.clf()
-                # plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
-                # plt.title('Surface-only W2')
-                # plt.ylabel('Misfit')
-                # plt.xlabel('Iteration Number')
-                # plt.savefig('misfit.png')
+                else:
+                        plt.scatter(xx,yy, color=C)
+                        plt.scatter(0.5,0.5,color=[0.0,1.0,0.0])
+                        plt.title('Surface-only L2  (red first guess, blue last guess, green ideal)')
+                        plt.savefig('scatter.png')
+                        plt.clf()
+                        plt.plot(np.array(range(len(point_guesses))), misfit_guesses)
+                        plt.title('Surface-only L2')
+                        plt.ylabel('Misfit')
+                        plt.xlabel('Iteration Number')
+                        plt.savefig('misfit.png')
 
                 # plt.clf()
                 # plt.figure()
