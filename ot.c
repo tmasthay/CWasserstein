@@ -446,8 +446,8 @@ int main(int argc, char* argv[]){
     float distance;
     int np=10*nt;
     //distance = wass2tracesurfabs(f,g,t,nx,nt,np);
-    distance = wass2tracesurf(f,g,t,nx,nt,np);
-    //distance = wass2trace(f,g,t,nz,nx,nt,np);
+    //distance = wass2tracesurf(f,g,t,nx,nt,np);
+    distance = wass2trace(f,g,t,nz,nx,nt,np);
     //distance = l2surf(f,g,nx,nt);
     //distance = l2total(f,g,nz,nx,nt);
 

@@ -1,4 +1,4 @@
-alias ot='cp $FOMEL/ot.c $MAD_COMPILE; cd $MAD_COMPILE; scons; cp $MAD_COMPILE/ot.exe $FOMEL; cd $FOMEL'
-alias el='cp $FOMEL/myelastic.c $MAD_COMPILE; cd $MAD_COMPILE; scons; cp $MAD_COMPILE/myelastic.exe $FOMEL; cd $FOMEL'
-alias go='ot; el; python $FOMEL/SConstruct'
-alias g='rm $FOMEL/*.exe; rm $MAD_COMPILE/*.exe; go'
+alias ot2='cp ot.c compile; cd compile; scons; cp ot.exe ..; cd ..'
+alias el2='cp myelastic.c compile; cd compile; scons; cp myelastic.exe ..; cd ..'
+alias go2='ot2; el2; python SConstruct'
+alias g2='rm *.exe; go2'

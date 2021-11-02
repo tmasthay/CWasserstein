@@ -96,67 +96,49 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 prog = Program('ot.c')
                 wass = str(prog[0])
 
+
+
                 if( 'W' in s ):
-                        #build commands: note command for z and x is the same
-                        x_name = 'distx_%s.rsf'%dist_hist
-                        z_name = 'distz_%s.rsf'%dist_hist
-                        x_inputs = '%s %s %s'%(wxs, wxs_ref, wass)
-                        z_inputs = '%s %s %s'%(wzs, wzs_ref, wass)
-                        cmd = '''./${SOURCES[2]} g=${SOURCES[1]} t=t.rsf'''
-                
-                        SeqFlow(x_name, x_inputs, cmd)
-                        SeqFlow(z_name, z_inputs, cmd)
-                        
-                        SeqFlow('trans_' + wxs, wxs, 'sftransp plane=23')
-                        SeqFlow('trans_' + wxs_ref, wxs_ref, 'sftransp plane=23')
-                        SeqFlow('trans_' + wzs, wzs, 'sftransp plane=23')
-                        SeqFlow('trans_' + wzs_ref, wzs_ref, 'sftransp plane=23')
-
-                        x_inputs_trans = '%s %s %s'%('trans_' + wxs, 'trans_' + wxs_ref, wass)
-                        z_inputs_trans = '%s %s %s'%('trans_' + wzs, 'trans_' + wzs_ref, wass)
-                        cmd2 = cmd.replace('t=t.rsf', 't=x.rsf')
-                        SeqFlow('trans_' + x_name, x_inputs_trans, cmd2)
-                        SeqFlow('trans_' + z_name, z_inputs_trans, cmd2)
-
-                        #parse out wasserstein distance
-                        x_contrib_str = co('sfdisfil < %s'%x_name, shell=True)
-                        x_contrib_str = x_contrib_str.decode('utf-8')
-                        z_contrib_str = co('sfdisfil < %s'%z_name, shell=True)
-                        z_contrib_str = z_contrib_str.decode('utf-8')
-
-                        xct = co('sfdisfil < %s'%('trans_' + x_name), shell=True).decode('utf-8')
-                        zct = co('sfdisfil < %s'%('trans_' + z_name), shell=True).decode('utf-8')
-
-                        # input(x_contrib_str)
-                        # input(z_contrib_str)
-                        #define tmp function to get floating value from string
-                        #get_val = lambda x : float(eval(x.split(':')[-1]))
                         def get_val(x):
                                 #print('x=%s'%x)
                                 return float(eval(x.split(':')[-1]))
-
-                        #increment dist_hist for next call
                         dist_hist += 1
 
-                        #get contributions and return them
-                        # if( 'C' in s ):
-                        #         return get_val(x_contrib_str) + get_val(z_contrib_str)
-                        #return get_val(xct) + get_val(zct)
-                        print('%s\nMISFIT EXEC TIME: %f'%(''.join(80*['*']), time() - misfit_exec_time_start))
-                        option = 'time'
-                        if( option == 'both' ):
-                                the_val = get_val(x_contrib_str) + get_val(z_contrib_str) + get_val(xct) + get_val(zct)
-                                print('x=%s,misfit=%f'%(p, the_val))
-                                return the_val
-                        elif( option == 'time' ):
-                                the_val = get_val(x_contrib_str) + get_val(z_contrib_str)
-                                print('x=%s,misfit=%f'%(p, the_val))
-                                return the_val
-                        else:
-                                the_val = get_val(xct) + get_val(zct)
-                                print('x=%s,misfit=%f'%(p, the_val))
-                                return the_val
+                        option = 'space'
+                        sum = 0.0
+                        cmd = '''./${SOURCES[2]} g=${SOURCES[1]} t=t.rsf'''
+                        if( option in ['time', 'both'] ):
+                                #build commands: note command for z and x is the same
+                                x_name = 'distx_%s.rsf'%dist_hist
+                                z_name = 'distz_%s.rsf'%dist_hist
+                                x_inputs = '%s %s %s'%(wxs, wxs_ref, wass)
+                                z_inputs = '%s %s %s'%(wzs, wzs_ref, wass)
+                                SeqFlow(x_name, x_inputs, cmd)
+                                SeqFlow(z_name, z_inputs, cmd)
+
+                                #parse out wasserstein distance
+                                sum += get_val(co('sfdisfil < %s'%x_name, shell=True).decode('utf-8'))
+                                sum += get_val(co('sfdisfil < %s'%z_name, shell=True).decode('utf-8'))
+                        if( option in ['space', 'both'] ):
+                                x_name = 'distx_%s.rsf'%dist_hist
+                                z_name = 'distz_%s.rsf'%dist_hist
+                                SeqFlow('trans_' + wxs, wxs, 'sftransp plane=23')
+                                SeqFlow('trans_' + wxs_ref, wxs_ref, 'sftransp plane=23')
+                                SeqFlow('trans_' + wzs, wzs, 'sftransp plane=23')
+                                SeqFlow('trans_' + wzs_ref, wzs_ref, 'sftransp plane=23')
+                                x_inputs_trans = '%s %s %s'%('trans_' + wxs, 'trans_' + wxs_ref, wass)
+                                z_inputs_trans = '%s %s %s'%('trans_' + wzs, 'trans_' + wzs_ref, wass)
+                                cmd2 = cmd.replace('t=t.rsf', 't=x.rsf')
+                                SeqFlow('trans_' + x_name, x_inputs_trans, cmd2)
+                                SeqFlow('trans_' + z_name, z_inputs_trans, cmd2)
+                                sum += get_val(co('sfdisfil < %s'%('trans_' + x_name), shell=True).decode('utf-8'))
+                                sum += get_val(co('sfdisfil < %s'%('trans_' + z_name), shell=True).decode('utf-8'))
+
+                        print('%s\nMISFIT EXEC TIME: %f\nx=%s, misfit=%f'%(''.join(80*['*']), time() - misfit_exec_time_start, p, sum))
+                        return sum
                 else:
+                        print('Branch should not exist')
+                        exit(-1)
                         # wxss = wxs.replace('.rsf','')
                         # wzss = wzs.replace('.rsf','')
                         # wxss_ref = wxs_ref.replace('.rsf','')
@@ -234,9 +216,11 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 x_ini = np.linspace(0.3,0.7,nx_ini)
                 
                 ini = [np.array(guess) for guess in cartesian_product(z_ini, x_ini)]
-                #ini = [[0.5, 0.8]]
-                deriv_info = len(ini) * ([[lambda x: numerical_deriv(x,misfit,0.1), lambda x: numerical_hessian(x,misfit,0.1)]])
+                converge_error = False
+                if( not converge_error ):
+                        ini = [[0.6,0.7]]
 
+                deriv_info = len(ini) * ([[lambda x: numerical_deriv(x,misfit,0.1), lambda x: numerical_hessian(x,misfit,0.1)]])
                 methods = ['Nelder-Mead']
 
                 final_answers = []
@@ -293,7 +277,6 @@ if( 'wavz_synthetic.rsf' in ls_out \
                 C = [[red_channel[i], 0.0, blue_channel[i]] for i in range(len(blue_channel))]
                 print(C)
 
-                converge_error = True
                 if( converge_error ):
                         ref_pt = [d['eszf'], d['esxf']]
                         far_off = [np.linalg.norm(ref_pt - guess) for guess in final_answers]
