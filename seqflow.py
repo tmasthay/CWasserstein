@@ -1,7 +1,7 @@
 import os
 from time import time
 
-def clean_files(files, default_ext='.rsf', check_none=False):
+def clean_files(files, ext='.rsf', check_none=False):
     if( check_none and type(files) == type(None) ):
         return []
     elif( type(files) == str ):
@@ -9,13 +9,15 @@ def clean_files(files, default_ext='.rsf', check_none=False):
     if( type(files) != list ):
         print('FATAL: Invalid file format type for clean_files')
         exit(-1)
-    return [e if '.' in e else e + '.rsf' for e in files]
+    return [e if e[-4:] in ['.rsf', '.vpl', '.exe'] else e + ext for e in files]
 
 def clean_cmd(output_files, input_files, cmd):
     for i in range(len(output_files)):
+        #input('TARGETS[%d] -> %s'%(i, output_files[i]))
         cmd = cmd.replace('${TARGETS[%d]}'%i, output_files[i])
     
     for i in range(len(input_files)):
+        #input('SOURCES[%d] -> %s'%(i, input_files[i]))
         cmd = cmd.replace('${SOURCES[%d]}'%i, input_files[i])
 
     y = [e.strip() for e in cmd.split('|')]
@@ -33,9 +35,25 @@ def SeqFlow(output_files, input_files, cmd, verbose=False):
     inp_clean = clean_files(input_files, check_none=True)
     cmd = clean_cmd(out_clean, inp_clean, cmd)
     if( verbose ):
-        print(''''\'\'\'%s\'\'\'...time='''%cmd, end='')
+        print(''''\'\'\'%s\'\'\'...time='''%cmd)
     t = time()
     y = os.system(cmd)
     if( verbose ):
         print(time() - t)
-    
+
+def SeqPlot(output_files, input_files, cmd, verbose=False):
+    out_clean = clean_files(output_files, ext='.vpl')
+    inp_clean = clean_files(input_files, check_none=True)
+    cmd = clean_cmd(out_clean, inp_clean, cmd)
+    if( verbose ):
+        print(''''\'\'\'%s\'\'\'...time='''%cmd)
+    t = time()
+    y = os.system(cmd)
+    if( verbose ):
+        print(time() - t)
+
+def SeqFlowV(output_files, input_files, cmd):
+    SeqFlow(output_files, input_files, cmd, verbose=True)
+
+def SeqPlotV(output_files, input_files, cmd):
+    SeqPlot(output_files, input_files, cmd, verbose=True)

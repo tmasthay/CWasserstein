@@ -75,7 +75,7 @@ def  forward(d):
     create_field(vs, 'vs', get_field('vp'))
     create_field(rho, 'rho')
     SeqFlow(combine(['wavz','wavx']), combine(['vp', 'vs', 'rho']) + ' ' + elas,
-        fc)
+        fc, False)
 
 def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
     muz = mu[0]
@@ -102,12 +102,13 @@ def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
     def get_curr(the_shift):
         return '%s * %s'%(basezx, my_gauss('x3', mut-the_shift, sigt))
 
-    Flow('t_test', None, 'math output="x1" n1=%d d1=%.15e'%(nt, dt))
-    Flow('ref_t_test', None, 'math output="%s" %s'%(get_curr(0.0), tail_cmd))
+    SeqFlow('t_test', None, 'math output="x1" n1=%d d1=%.15e'%(nt, dt))
+    SeqFlow('ref_t_test', None, 'math output="%s" %s'%(get_curr(0.0), tail_cmd))
 
     for t in time_shifts:
         curr = get_curr(t)
         output_name = 'test_%.4e'%t
-        Flow(output_name, None, 'math output="%s" %s'%(curr,tail_cmd))
+        SeqFlow(output_name, None, 'math output="%s" %s'%(curr,tail_cmd))
 
     
+

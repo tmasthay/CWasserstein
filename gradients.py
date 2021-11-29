@@ -47,3 +47,4 @@ def numerical_hessian(x, f, tol):
     return y
         
      
+

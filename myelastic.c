@@ -294,6 +294,10 @@ int main(int argc, char* argv[])
             for(isz = 0; isz < nzf; isz++ ){
                 sx =  sxs + isx * dxs;
                 sz = szs + isz * dzs;
+                if( sx < 0 ) sx = 0;
+                if( sx > nx - 1 ) sx = nx - 1;
+                if( sz < 0 ) sz = 0;
+                if( sz > nz - 1 ) sz = nz - 1;
                 // fprintf(stderr, "(%d,%d,%d,%d)\n", isx, isz, sx, sz);
                 txx[sx][sz]+=wlt[it];
 	            tzz[sx][sz]+=wlt[it];
@@ -338,3 +342,4 @@ int main(int argc, char* argv[])
 
     exit(0);
 }
+
