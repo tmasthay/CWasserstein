@@ -11,8 +11,8 @@ test = False
 if( not test ):
     t = time()
     
-    nz = 20
-    nx = 20
+    nz = 50
+    nx = 50
     z = np.linspace(0.2, 0.8, nz)
     x = np.linspace(0.2, 0.8, nx)
     
