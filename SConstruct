@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 from time import time
 import m8r
 
-test = False
+landscape = False
+inversion = True
 
-if( not test ):
+if( landscape ):
     t = time()
     
     nz = 50
@@ -29,8 +30,8 @@ if( not test ):
     plt.savefig('W2-hyperbolictrace.png')
     
     print('Total time: %.4f'%(time() - t))
-else:
-    Flow('test-file',None,'math output="1.0" n1=100 d1=0.01')
 
+if( inversion ):
+    
 
 
