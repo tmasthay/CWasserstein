@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from time import time
 import m8r
 
-test = True
+test = False
 
 if( not test ):
     t = time()

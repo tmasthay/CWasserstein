@@ -2,5 +2,6 @@ from rsf.proj import *
 
 p1 = Program('ot.c')
 p2 = Program('myelastic.c')
+p3 = Program('sw.c')
 
 End()
