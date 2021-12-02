@@ -18,13 +18,13 @@ def setup_output_directory(case_name):
         .replace('\n','') \
         .split(' ')
     
-    date_form = ''.join(date_info[1:4]) + '_' + date_form[-1]
+    date_form = ''.join(date_info[1:4]) + '_' + date_info[-1]
     top_dir = fig_dir + '/' + date_form
 
     if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
-    top_dir = top_dir + '/' + case_name
+    top_dir = top_dir + '/' + '_'.join(case_name.split(' '))
     if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
@@ -44,19 +44,17 @@ def setup_output_directory(case_name):
 
     return top_dir
 
-def go():
+def run_mode(mode):
     if( landscape ):
         t = time()
         
-        nz = 25
-        nx = 25
+        nz = 10
+        nx = 10
         z = np.linspace(0.2, 0.8, nz)
         x = np.linspace(0.2, 0.8, nx)
         
         pts = np.array([yy for yy in product(z,x)])
         
-
-        mode = 1 if len(sys.argv) == 1 else int(sys.argv[1])
         set_mode(mode)
 
         misfits = run_test(pts)
@@ -76,7 +74,13 @@ def go():
     if( inversion ):
        os.system('python inversion.py')
 
-go()
+def go():
+    if( len(sys.argv) == 1 ):
+        run_mode(1)
+    else:
+        y = [int(xx) for xx in sys.argv.split(' ')[1:]]
+        for yy in y:
+            run_mode(yy)
     
 
 
