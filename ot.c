@@ -390,10 +390,10 @@ float l2total(float*** f, float*** g, int nz, int nx, int nt){
 
 int main(int argc, char* argv[]){
     //assume structured grid
-    int nz, nx, nt, nt_true, nz_check, nx_check, nt_check;
+    int nz, nx, nt, nt_true, nz_check, nx_check, nt_check, mode;
     float ***f, ***g, *t, *p, ***q;
 
-    sf_file f_file, g_file, t_file, wass_file;
+    sf_file f_file, g_file, t_file, wass_file, mode;
 
     sf_init(argc, argv);
 
@@ -415,10 +415,13 @@ int main(int argc, char* argv[]){
     if (!sf_histint(g_file, "n2", &nx_check)) sf_error("No n2: g");
     if (!sf_histint(g_file, "n3", &nt_check)) sf_error("No n1: g");
     if (!sf_histint(t_file, "n1", &nt_true)) sf_error("No n1: t");
+    
+    //read command-line literal inputs
+    if (!sf_getint("mode", &mode)) mode=1;
 
-    // ////fprintf(stderr, "nz = %d", nz);
-    // ////fprintf(stderr, "nx = %d", nx);
-    // ////fprintf(stderr, "nt = %d", nt);
+    fprintf(stderr, "nz = %d", nz);
+    fprintf(stderr, "nx = %d", nx);
+    fprintf(stderr, "nt = %d", nt);
 
     // ////fprintf(stderr, "(nt,nt_check,nt_true) = (%d,%d,%d)\n", nt, nt_check, nt_true);
 
@@ -457,11 +460,21 @@ int main(int argc, char* argv[]){
     //transport(f,g,T,x,N);
     float distance;
     int np=nt;
-    //distance = wass2tracesurfabs(f,g,t,nx,nt,np);
-    //distance = wass2tracesurf(f,g,t,nx,nt,np);
-    //distance = wass2trace(f,g,t,nz,nx,nt,np);
-    distance = l2surf(f,g,nx,nt);
-    //distance = l2total(f,g,nz,nx,nt);
+
+    switch( mode ){
+        case 1:
+            distance = wass2tracesurf(f,g,t,nx,nt,np);
+        case 2:
+            distance = l2surf(f,g,nx,nt);
+        case 3:
+            distance = wass2trace(f,g,t,nz,nx,nt,np);
+        case 4:
+            distance = l2total(f,g,nz,nx,nt);
+        case 5:
+            distance = wass2tracesurfabs(f,g,t,nx,nt,np);
+        default:
+            fprintf(stderr, "Case no. %d not supported.\n", mode);
+    }
 
     float* distance_tmp;
     int it;
