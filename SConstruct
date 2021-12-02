@@ -5,6 +5,7 @@ from itertools import product
 import matplotlib.pyplot as plt
 from time import time
 import sys
+from subprocess import check_output as co
 
 landscape = True
 inversion = False
@@ -20,6 +21,36 @@ def mode_to_str(mode):
         return 'L2 global'
     elif( mode == 5 ):
         return 'W2 trace abs-renormalize surface'
+    else:
+        print('Mode not supported...exiting')
+        exit(-1)
+
+def find_directory(case_name):
+    fig_dir = '../figures'
+    date_info = co('date',shell=True) \
+        .decode('utf-8') \
+        .replace('\n','') \
+        .split(' ')
+    
+    date_form = ''.join(date_info[1:4]) + '_' + date_form[-1]
+    top_dir = fig_dir + '/' + date_form
+
+    if( !os.path.exists( top_dir ) ):
+        os.system('mkdir %s'%top_dir)
+
+    top_dir = top_dir + '/' + case_name
+    if( !os.path.exists( top_dir ) ):
+        os.system('mkdir %s'%top_dir)
+
+    top_dir = top_dir + '/' + date_info[4]
+    if( os.path.exists( top_dir ) ):
+        print('FATAL ERROR: two jobs sent off within second')
+        print('CHECK TIME ZONE SETTINGS ON COMPUTER')
+        exit(-1)
+    else:
+        os.system('mkdir %s'%top_dir)
+
+    return top_dir
 
 def go():
     if( landscape ):
@@ -41,11 +72,12 @@ def go():
         misfits = misfits.reshape(Z.shape)
         
         plt_title = mode_to_str(mode)
+        dir = find_directory(plt_title)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         ax.plot_surface(Z,X,misfits)
         plt.title(plt_title)
-        plt.savefig('_'.join(plt_title.split(' ')) + '.png')
+        plt.savefig(dir + '/' + '_'.join(plt_title.split(' ')) + '.png')
         
         print('Total time: %.4f'%(time() - t))
     
