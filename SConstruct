@@ -35,11 +35,11 @@ def setup_output_directory(case_name):
     date_form = ''.join(date_info[1:4]) + '_' + date_form[-1]
     top_dir = fig_dir + '/' + date_form
 
-    if( !os.path.exists( top_dir ) ):
+    if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
     top_dir = top_dir + '/' + case_name
-    if( !os.path.exists( top_dir ) ):
+    if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
     top_dir = top_dir + '/' + date_info[4]
