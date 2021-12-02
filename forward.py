@@ -76,7 +76,7 @@ def  forward(d):
 
     fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3)
 
-    if( !os.path.exists('vp_synthetic.rsf') ):
+    if( not os.path.exists('vp_synthetic.rsf') ):
          create_field(vp, 'vp')
          create_field(vs, 'vs', get_field('vp'))
          create_field(rho, 'rho')
@@ -84,7 +84,7 @@ def  forward(d):
              + ' ' + elas, fc)
     else:
          SeqFlowLcl(combine(['wavz', 'wavx']),
-             '_synthetic '.join(['vp','vs','rho',''])[:-1],
+             '_synthetic '.join(['vp','vs','rho',''])[:-1] + ' ' + elas,
              fc) 
 
 def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):

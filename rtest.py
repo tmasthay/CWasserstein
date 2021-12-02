@@ -128,7 +128,7 @@ def run_case_short(src_z, src_x):
     global mode
 
     e = copy.copy(d_forward)
-    e['case'] = str(src_z) + '_' + str(src_x) + '_' + mode
+    e['case'] = str(src_z) + '_' + str(src_x) + '_' + str(mode)
     e['sszf'] = src_z
     e['ssxf'] = src_x
 

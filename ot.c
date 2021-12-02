@@ -201,7 +201,7 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         g_int += dx * avgg;
     }
     float tol = 0.0;
-    float support_penalty = 1e-5;
+    //float support_penalty = 1e-5;
     if( f_int <= tol && g_int <= tol ) {
         //fprintf(stderr, "Support complements agree\n");
         return 0.0;
@@ -218,8 +218,8 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
     
     sum = 0.0;
     for(ip = 0; ip < P - 1; ip++){
-        float dp = p[ip+1] - p[ip];
-        float avg = y[ip+1] + y[ip];
+        //float dp = p[ip+1] - p[ip];
+        //float avg = y[ip+1] + y[ip];
         sum = sum + 0.5 * (p[ip+1] - p[ip]) * (y[ip+1] + y[ip]);
 
         //fprintf(stderr, "(dp, avg, sum) = (%.15f, %.15f, %.15f)\n", dp, avg, sum);
@@ -391,9 +391,9 @@ float l2total(float*** f, float*** g, int nz, int nx, int nt){
 int main(int argc, char* argv[]){
     //assume structured grid
     int nz, nx, nt, nt_true, nz_check, nx_check, nt_check, mode;
-    float ***f, ***g, *t, *p, ***q;
+    float ***f, ***g, *t, *p;
 
-    sf_file f_file, g_file, t_file, wass_file, mode;
+    sf_file f_file, g_file, t_file, wass_file;
 
     sf_init(argc, argv);
 
@@ -463,17 +463,18 @@ int main(int argc, char* argv[]){
 
     switch( mode ){
         case 1:
-            distance = wass2tracesurf(f,g,t,nx,nt,np);
+            distance = wass2tracesurf(f,g,t,nx,nt,np); break;
         case 2:
-            distance = l2surf(f,g,nx,nt);
+            distance = l2surf(f,g,nx,nt); break;
         case 3:
-            distance = wass2trace(f,g,t,nz,nx,nt,np);
+            distance = wass2trace(f,g,t,nz,nx,nt,np); break;
         case 4:
-            distance = l2total(f,g,nz,nx,nt);
+            distance = l2total(f,g,nz,nx,nt); break;
         case 5:
-            distance = wass2tracesurfabs(f,g,t,nx,nt,np);
+            distance = wass2tracesurfabs(f,g,t,nx,nt,np); break;
         default:
-            fprintf(stderr, "Case no. %d not supported.\n", mode);
+            fprintf(stderr, "Case no. %d not supported. Exiting. \n", mode);
+            exit(-1);
     }
 
     float* distance_tmp;
@@ -516,7 +517,7 @@ int main(int argc, char* argv[]){
         integrandneg_file = sf_output("integrand_neg");
 
         p = sf_floatalloc(np);
-        q = sf_floatalloc3(nz,nx,np);
+        //q = sf_floatalloc3(nz,nx,np);
 
         F_pos = sf_floatalloc3(nz,nx,nt);
         F_neg = sf_floatalloc3(nz,nx,nt);
