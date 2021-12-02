@@ -25,7 +25,7 @@ def mode_to_str(mode):
         print('Mode not supported...exiting')
         exit(-1)
 
-def find_directory(case_name):
+def setup_output_directory(case_name):
     fig_dir = '../figures'
     date_info = co('date',shell=True) \
         .decode('utf-8') \
@@ -50,6 +50,12 @@ def find_directory(case_name):
     else:
         os.system('mkdir %s'%top_dir)
 
+    f = open(top_dir + '/GITHASH.txt', 'w')
+    f.write(co('git log', shell=True) \
+        .decode('utf-8') \
+        .split('commit')[1] \
+        .split()[0])
+
     return top_dir
 
 def go():
@@ -72,7 +78,7 @@ def go():
         misfits = misfits.reshape(Z.shape)
         
         plt_title = mode_to_str(mode)
-        dir = find_directory(plt_title)
+        dir = setup_output_directory(plt_title)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         ax.plot_surface(Z,X,misfits)
