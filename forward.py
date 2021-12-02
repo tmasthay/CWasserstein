@@ -1,13 +1,18 @@
 #from rsf.proj import *
 from seqflow import *
 
+SeqFlowLcl = SeqFlowV
+
 def  forward(d):
     #case name tag
     case_name = d['case']
 
     #append tag to fields
-    def get_field(field_name):
-        return field_name + '_' + case_name
+    def get_field(field_name, ref=False):
+        if(ref):
+            return field_name + '_synthetic'
+        else:
+            return field_name + '_' + case_name
 
     #discretization info
     n1 = d['nz']
@@ -47,7 +52,7 @@ def  forward(d):
 
         output_file = get_field(field_name).replace('.rsf','')
         output_file += '.rsf'
-        SeqFlow(output_file,
+        SeqFlowLcl(output_file,
             input_file,
             '''
             math output="%s" n1=%s n2=%s d1=%.15f d2=%.15f
@@ -71,11 +76,16 @@ def  forward(d):
 
     fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3)
 
-    create_field(vp, 'vp')
-    create_field(vs, 'vs', get_field('vp'))
-    create_field(rho, 'rho')
-    SeqFlow(combine(['wavz','wavx']), combine(['vp', 'vs', 'rho']) + ' ' + elas,
-        fc, False)
+    if( !os.path.exists('vp_synthetic.rsf') ):
+         create_field(vp, 'vp')
+         create_field(vs, 'vs', get_field('vp'))
+         create_field(rho, 'rho')
+         SeqFlowLcl(combine(['wavz','wavx']), combine(['vp', 'vs', 'rho']) 
+             + ' ' + elas, fc)
+    else:
+         SeqFlowLcl(combine(['wavz', 'wavx']),
+             '_synthetic '.join(['vp','vs','rho',''])[:-1],
+             fc) 
 
 def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
     muz = mu[0]
@@ -102,13 +112,13 @@ def gauss_test(mu,sig, time_shifts, nz, nx, nt, dz, dx, dt):
     def get_curr(the_shift):
         return '%s * %s'%(basezx, my_gauss('x3', mut-the_shift, sigt))
 
-    SeqFlow('t_test', None, 'math output="x1" n1=%d d1=%.15e'%(nt, dt))
-    SeqFlow('ref_t_test', None, 'math output="%s" %s'%(get_curr(0.0), tail_cmd))
+    SeqFlowLcl('t_test', None, 'math output="x1" n1=%d d1=%.15e'%(nt, dt))
+    SeqFlowLcl('ref_t_test', None, 'math output="%s" %s'%(get_curr(0.0), tail_cmd))
 
     for t in time_shifts:
         curr = get_curr(t)
         output_name = 'test_%.4e'%t
-        SeqFlow(output_name, None, 'math output="%s" %s'%(curr,tail_cmd))
+        SeqFlowLcl(output_name, None, 'math output="%s" %s'%(curr,tail_cmd))
 
     
 
