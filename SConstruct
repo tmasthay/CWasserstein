@@ -11,6 +11,13 @@ from mode_to_str import *
 landscape = True
 inversion = False
 
+def parse(s):
+    is_present = eval(' or '.join([str('%s'%s in t) for t in sys.argv])) 
+    if( is_present ):
+        return eval(':'.join(sys.argv).split('%s='%s)[1].split(':')[0])
+    else:
+        return None
+
 def setup_output_directory(case_name):
     fig_dir = '../figures'
     date_info = co('date',shell=True) \
@@ -48,8 +55,14 @@ def run_mode(mode):
     if( landscape ):
         t = time()
         
-        nz = 10
-        nx = 10
+        zx_dims = parse('grid')
+        if( type(zx_dims) == type(None) ):
+            nz = 10
+            nx = 10
+        else:
+            nz = zx_dims[0]
+            nx = zx_dims[1]
+
         z = np.linspace(0.2, 0.8, nz)
         x = np.linspace(0.2, 0.8, nx)
         
@@ -58,9 +71,14 @@ def run_mode(mode):
         set_mode(mode)
 
         misfits = run_test(pts)
+        threshold = parse('threshold')
+        if( type(threshold) != type(None) ):
+            for i in range(len(misfits)):
+                misfits[i] = min(threshold, misfits[i])
+
         Z,X = np.meshgrid(z,x)
         misfits = misfits.reshape(Z.shape)
-        
+
         plt_title = mode_to_str(mode)
         dir = setup_output_directory(plt_title)
         fig = plt.figure()
@@ -75,12 +93,11 @@ def run_mode(mode):
        os.system('python inversion.py')
 
 def go():
-    if( len(sys.argv) == 1 ):
-        run_mode(1)
+    modes = parse('modes')
+    if( type(modes) != type(None) ):
+        for m in modes:
+            run_mode(m)
     else:
-        y = [int(xx) for xx in sys.argv.split(' ')[1:]]
-        for yy in y:
-            run_mode(yy)
-    
+        run_mode(1)
 
-
+go()
