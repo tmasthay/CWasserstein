@@ -31,16 +31,16 @@ def setup_output_directory(case_name):
     if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
-    top_dir = top_dir + '/' + '_'.join(case_name.split(' '))
-    if( not os.path.exists( top_dir ) ):
-        os.system('mkdir %s'%top_dir)
-
     top_dir = top_dir + '/' + date_info[4]
     if( os.path.exists( top_dir ) ):
         print('FATAL ERROR: two jobs sent off within second')
         print('CHECK TIME ZONE SETTINGS ON COMPUTER')
         exit(-1)
     else:
+        os.system('mkdir %s'%top_dir)
+
+    top_dir = top_dir + '/' + '_'.join(case_name.split(' '))
+    if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
     f = open(top_dir + '/GITHASH.txt', 'w')
@@ -83,7 +83,7 @@ def run_mode(mode):
         dir = setup_output_directory(plt_title)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        ax.plot_surface(Z,X,misfits)
+        ax.plot_surface(Z,X,np.log(misfits))
         plt.title(plt_title)
         plt.savefig(dir + '/' + '_'.join(plt_title.split(' ')) + '.png')
         

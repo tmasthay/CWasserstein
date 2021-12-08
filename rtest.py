@@ -27,7 +27,7 @@ d_forward = {
         'esxf' :  0.5,
         'nsz' :  1,
         'nsx' :  1,
-        'nb' : 20,
+        'nb' : 35,
         'fm' : 5.0,
         'vp': '0.5',
         'vs': '0.707 * input',
@@ -88,11 +88,13 @@ def combine(x,y,d):
     inputs = '.vpl '.join([t0,t1,b0,b1, ''])[:-1]
     system('vppen gridnum=2,2 %s > %s.vpl'%(inputs, comparison))
 
-    cmd='./ot.exe g=${SOURCES[1]} t=t.rsf mode=%d'%mode
+    t_mode='x.rsf'
+    #t_mode = 't.rsf'
+    cmd='./ot.exe g=${SOURCES[1]} t=%s mode=%d'%(t_mode, mode)
 
     c0 = t0 + '_trans'
     c1 = t1 + '_trans'
-    plane=23
+    plane=13 if t_mode[0] == 'x' else 23
 #    SeqFlowLcl(c0, t0, 'transp plane=23 | transp plane=12')
 #    SeqFlowLcl(c1, t1, 'transp plane=23 | transp plane=12')
     SeqFlowLcl(c0, t0, 'transp plane=%d'%plane)
@@ -118,8 +120,8 @@ def run_case(d, reference_name):
     xc = combine(namex, 'wavx_' + reference_name, {'output': 'cmp_x_' + d['case']})
     distance = zc + xc
 
-    #os.system('rm /var/tmp/%s*.rsf@'%namez)
-    #os.system('rm /var/tmp/%s*.rsf@'%namex)
+    os.system('rm /var/tmp/%s*.rsf@'%namez)
+    os.system('rm /var/tmp/%s*.rsf@'%namex)
 
     return distance
 

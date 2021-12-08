@@ -201,7 +201,7 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         g_int += dx * avgg;
     }
     float tol = 0.0;
-    float support_penalty = 1e-5;
+    float support_penalty = 10.0;
     if( f_int <= tol && g_int <= tol ) {
         //fprintf(stderr, "Support complements agree\n");
         return 0.0;
@@ -367,7 +367,7 @@ float l2surf(float*** f, float*** g, int nx, int nt){
     for(ix = 0; ix < nx; ix++){
         for(it = 0; it < nt; it++){
             float diff = f[0][ix][it] - g[0][ix][it];
-            sum += diff * diff;
+            sum = sum + diff * diff;
         }
     }
     return sum;
@@ -381,7 +381,7 @@ float l2total(float*** f, float*** g, int nz, int nx, int nt){
         for(ix = 0; ix < nx; ix++){
             for(it = 0; it < nt; it++){
                 float diff = f[iz][ix][it] - g[iz][ix][it];
-                sum += diff * diff;
+                sum = sum + diff * diff;
             }
         }
     }
@@ -459,7 +459,7 @@ int main(int argc, char* argv[]){
 
     //transport(f,g,T,x,N);
     float distance;
-    int np=nt;
+    int np=10*nt;
 
     switch( mode ){
         case 1:
