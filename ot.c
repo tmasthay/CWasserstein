@@ -367,7 +367,7 @@ float l2surf(float*** f, float*** g, int nx, int nt){
     for(ix = 0; ix < nx; ix++){
         for(it = 0; it < nt; it++){
             float diff = f[0][ix][it] - g[0][ix][it];
-            sum = sum + diff * diff;
+            sum += diff * diff;
         }
     }
     return sum;
