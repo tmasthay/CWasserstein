@@ -83,9 +83,15 @@ def run_mode(mode):
         dir = setup_output_directory(plt_title)
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        ax.plot_surface(Z,X,np.log(misfits))
+        ax.plot_surface(Z,X,misfits)
+        ax.set_xlabel('Z')
+        ax.set_ylabel('X')
         plt.title(plt_title)
-        plt.savefig(dir + '/' + '_'.join(plt_title.split(' ')) + '.png')
+        case_dir = dir + '/' + '_'.join(plt_title.split(' '))
+        plt.savefig(case_dir + '.png')
+        np.save(case_dir + 'Z.npy', Z)
+        np.save(case_dir + 'X.npy', X)
+        np.save(case_dir + 'misfits.npy', misfits)
         
         print('Total time: %.4f'%(time() - t))
     
