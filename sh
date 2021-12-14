@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash-5.1.8
+#!/bin/bash
 
 declare -A args
 
@@ -28,7 +28,7 @@ output_name=tmp
 full_input_ref=wavz_synthetic
 full_input_ref_top=top_syn
 
-full_input_test=wavz_0.3000_0.3000
+full_input_test=test
 full_input_test_top=top_upperleft
 
 pdf_output_name=bigpdf

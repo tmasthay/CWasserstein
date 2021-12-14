@@ -1,4 +1,5 @@
 #include <rsf.h>
+#include <unistd.h>
 
 float my_max(float* x, int N){
     int i, max;
@@ -74,10 +75,13 @@ void renormalize(float* f, float *x, int N){
         return;
     }
     float reciprocal = 1.0 / sum;
-    ////fprintf(stderr, "RECIP: %.16e\n", reciprocal);
+    //fprintf(stderr, "RECIP: %.16e...", reciprocal);
+    float max = reciprocal * f[i];
     for( i = 0; i < N; i++ ){
         f[i] = reciprocal * f[i];
+        if( f[i] > max ) max = f[i];
     }
+    //fprintf(stderr, "max = %.16e\n", max);
 }
 
 void split_normalize(float* f, 
@@ -253,6 +257,8 @@ float wass2_split(float* f, float* g, float* x, float* p, int N, int P){
 
     //////fprintf(stderr, "(+w,+mf,+mg,-w,-mf,-mg) = (%.15f,%.15f,%.15f,%.15f,%.15f,%.15f)\n", pos, my_max(f_pos,N), my_max(g_pos,N), neg, my_max(f_neg,N), my_max(g_neg,N));
 
+    if( pos > 100 ) fprintf(stderr, "Pos = %f\n", pos);
+    if( neg > 100 ) fprintf(stderr, "Neg = %f\n", neg);
     return pos + neg;
 }
 
@@ -278,13 +284,19 @@ float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int n
     p = sf_floatalloc(np);
     p = linspace(0.0, 1.0, np);
 
+    fprintf(stderr, "initialized sum = %.16e", sum);
     for(iz = 0; iz < nz; iz++){
         for(ix = 0; ix < nx; ix++){
             float tmp = wass2_split(f[iz][ix], g[iz][ix], t, p, nt, np);
             sum += tmp;
+            if( tmp > 100 ){
+                fprintf(stderr, "(iz,ix,tmp) = (%d, %d, %f)\n", iz,ix,tmp);
+                sleep(1);
+            }
             //fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
         }
     }
+    fprintf(stderr, "wass2^2 = %.16e\n", sum);
     return sum;
 }
 
@@ -419,10 +431,6 @@ int main(int argc, char* argv[]){
     //read command-line literal inputs
     if (!sf_getint("mode", &mode)) mode=1;
 
-    fprintf(stderr, "nz = %d", nz);
-    fprintf(stderr, "nx = %d", nx);
-    fprintf(stderr, "nt = %d", nt);
-
     // ////fprintf(stderr, "(nt,nt_check,nt_true) = (%d,%d,%d)\n", nt, nt_check, nt_true);
 
     //Input validation
@@ -459,7 +467,7 @@ int main(int argc, char* argv[]){
 
     //transport(f,g,T,x,N);
     float distance;
-    int np=10*nt;
+    int np=nt;
 
     switch( mode ){
         case 1:

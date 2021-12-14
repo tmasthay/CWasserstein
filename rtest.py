@@ -6,8 +6,8 @@ from subprocess import check_output as co
 import copy
 import numpy as np
 
-SeqFlowLcl = SeqFlowV
-SeqPlotLcl = SeqPlotV
+SeqFlowLcl = SeqFlow
+SeqPlotLcl = SeqPlot
 
 global d_forward
 global d_veltran
@@ -120,8 +120,8 @@ def run_case(d, reference_name):
     xc = combine(namex, 'wavx_' + reference_name, {'output': 'cmp_x_' + d['case']})
     distance = zc + xc
 
-    os.system('rm /var/tmp/%s*.rsf@'%namez)
-    os.system('rm /var/tmp/%s*.rsf@'%namex)
+    #os.system('rm /var/tmp/%s*.rsf@'%namez)
+    #os.system('rm /var/tmp/%s*.rsf@'%namex)
 
     return distance
 

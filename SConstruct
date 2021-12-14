@@ -27,13 +27,13 @@ def setup_output_directory(case_name):
         .replace('\n','') \
         .split(' ')
     
-    date_form = ''.join(date_info[1:4]) + '_' + date_info[-1]
+    date_form = ''.join(date_info[1:3]) + '_' + date_info[-1]
     top_dir = fig_dir + '/' + date_form
 
     if( not os.path.exists( top_dir ) ):
         os.system('mkdir %s'%top_dir)
 
-    top_dir = top_dir + '/' + date_info[4]
+    top_dir = top_dir + '/' + date_info[3]
     if( os.path.exists( top_dir ) ):
         print('FATAL ERROR: two jobs sent off within second')
         print('CHECK TIME ZONE SETTINGS ON COMPUTER')
