@@ -205,7 +205,7 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         g_int += dx * avgg;
     }
     float tol = 0.0;
-    float support_penalty = 0.0;
+    float support_penalty = 1e-6;
     if( f_int <= tol && g_int <= tol ) {
         //fprintf(stderr, "Support complements agree\n");
         return 0.0;
