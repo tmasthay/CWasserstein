@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
     if (!sf_getint("kt",&kt)) sf_error("kt required");/* record wavefield at time kt */
     if (kt>nt) sf_error("make sure kt<=nt");
     if (!sf_getfloat("dt",&dt)) sf_error("dt required");/* time sampling interval */
-    if (!sf_getfloat("fm",&fm)) fm=20.0; /*dominant freq of Ricker wavelet */
+    if (!sf_getfloat("fm",&fm)) fm=20.0; /*dominant freq of Rƒnxicker wavelet */
     if (!sf_getint("ft",&ft)) ft=0; /* first recorded time */
     if (!sf_getint("jt",&jt)) jt=1;	/* time interval */
     if (!sf_getfloat("ssxf",&ssxf)) ssxf=0.25; /* x-source location start */
@@ -235,10 +235,10 @@ int main(int argc, char* argv[])
     nxpad=nx+2*nb;	
     _dz=1.0/dz;
     _dx=1.0/dx;
-    sxs = (int) ( ((float) nxpad) * ssxf );
-    dxs = (int) ( ((float) nxpad) * (esxf - ssxf) / (float) (nxf - 1) );
-    szs = (int) ( ((float) nzpad) * sszf );
-    dzs = (int) ( ((float) nzpad) * (eszf - sszf) / (float) (nzf - 1) );
+    sxs = nb + (int) ( ((float) nx) * ssxf );
+    dxs = (int) ( ((float) nx) * (esxf - ssxf) / (float) (nxf - 1) );
+    szs = nz + (int) ( ((float) nz) * sszf );
+    dzs = (int) ( ((float) nz) * (eszf - sszf) / (float) (nzf - 1) );
     
     // fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
 
@@ -294,10 +294,10 @@ int main(int argc, char* argv[])
             for(isz = 0; isz < nzf; isz++ ){
                 sx =  sxs + isx * dxs;
                 sz = szs + isz * dzs;
-                if( sx < 0 ) sx = 0;
-                if( sx > nx - 1 ) sx = nx - 1;
-                if( sz < 0 ) sz = 0;
-                if( sz > nz - 1 ) sz = nz - 1;
+                if( sx < nb ) { fprintf(stderr, "sx = %d\n", sx); sx = 0; }
+                if( sx > nb + nx - 1 ) { fprintf(stderr, "sx=%d\n", sx); sx = nx - 1; }
+                if( sz < nb ) { fprintf(stderr, "sz=%d\n", sz); sz = 0; }
+                if( sz > nb + nz - 1 ) { fprintf(stderr, "sz=%d\n", sz); sz = nz - 1; }
                 // fprintf(stderr, "(%d,%d,%d,%d)\n", isx, isz, sx, sz);
                 txx[sx][sz]+=wlt[it];
 	            tzz[sx][sz]+=wlt[it];
