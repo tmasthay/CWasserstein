@@ -29,7 +29,15 @@ def create_comp_plots(name1, name2):
 def w2(name1, name2):
     name1 = 'wavz_' + name1 + '_trans'
     name2 = 'wavz_' + name2 + '_trans'
-    cmd = './ot.exe g=%s.rsf t=t.rsf mode=1 < %s.rsf > dist.rsf'%(name1,name2)
+    get_everything = True
+    if( get_everything ):
+        cmd = './ot.exe g=%s.rsf t=t.rsf mode=1 p=p.rsf fpos=fpos.rsf fneg=fneg.rsf ff=f.rsf gg=g.rsf gneg=gneg.rsf gpos=gpos.rsf'%name1
+        cmd = cmd + ' f_cdfpos=f_cdfpos.rsf f_cdfneg=f_cdfneg.rsf g_cdfpos=g_cdfpos.rsf g_cdfneg=g_cdfneg.rsf'
+        cmd = cmd + ' qfpos=qfpos.rsf qfneg=qfneg.rsf qgpos=qgpos.rsf qgneg=qgneg.rsf'
+        cmd = cmd + ' integrand_pos=integrand_pos.rsf integrand_neg=integrand_neg.rsf'
+        cmd = cmd + ' %s.rsf > dist.rsf'%name2
+    else:
+        cmd = './ot.exe g=%s.rsf t=t.rsf mode=1 < %s.rsf > dist.rsf'%(name1,name2)
     print('cmd = %s'%cmd)
     system(cmd)
     s = co('sfdisfil < dist.rsf', shell=True) \
@@ -40,11 +48,13 @@ def w2(name1, name2):
     return float(s)
 
 def run_script():
-    create_idv('ref', 0.5, 0.5)
+    ref_x = 0.5
+    ref_depth = 0.5
+    create_idv('ref', ref_x, ref_depth)
 
     w2_lcl = lambda x : w2('ref_top', x)
 
-    N = 20
+    N = 100
     t0 = 0.05
     t1 = 0.95 
     v_tests = np.linspace(t0, t1 ,N)
@@ -55,13 +65,14 @@ def run_script():
 
     for (i,v) in enumerate(v_tests):
         name = 'v_%.2f'%v
-        create_idv(name, v, 0.5)
+        create_idv(name, v, ref_x)
         create_comp_plots('ref_top', name + '_top')
         vw2[i] = w2_lcl(name + '_top')
    
     for (i,h) in enumerate(h_tests):
+        break
         name = 'h_%.2f'%h
-        create_idv(name, 0.5, h)
+        create_idv(name, ref_depth, h)
         create_comp_plots('ref_top', name + '_top') 
         hw2[i] = w2_lcl(name + '_top')
 
@@ -77,5 +88,8 @@ def run_script():
     plt.xlabel('Shift')
     plt.ylabel('Misfit')
     plt.savefig('horizontal.png')
-    
-run_script()
+
+auto_run = False
+
+if( auto_run ):    
+    run_script()
