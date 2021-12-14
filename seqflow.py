@@ -57,3 +57,9 @@ def SeqFlowV(output_files, input_files, cmd):
 
 def SeqPlotV(output_files, input_files, cmd):
     SeqPlot(output_files, input_files, cmd, verbose=True)
+
+def SeqFlowC(output_files, input_files, cmd):
+    SeqFlow(output_files, input_files, cmd, verbose=False)
+
+def SeqPlotC(output_files, input_files, cmd):
+    SeqPlot(output_files, input_files, cmd, verbose=False)
