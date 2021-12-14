@@ -11,6 +11,9 @@ def create_top(the_name):
 def create_idv_plots(the_name):
      SeqFlowV('%s.vpl'%the_name, '%s.rsf'%the_name, 'grey')
 
+def create_idv_graphs(the_name):
+     SeqFlowV('%s.vpl'%the_name, '%s.rsf'%the_name, 'graph')
+
 def create_idv(name, sz, sx):
     tru_name = 'wavz_' + name
     d = get_dict(name, sz, sx)
@@ -35,7 +38,7 @@ def w2(name1, name2):
         cmd = cmd + ' f_cdfpos=f_cdfpos.rsf f_cdfneg=f_cdfneg.rsf g_cdfpos=g_cdfpos.rsf g_cdfneg=g_cdfneg.rsf'
         cmd = cmd + ' qfpos=qfpos.rsf qfneg=qfneg.rsf qgpos=qgpos.rsf qgneg=qgneg.rsf'
         cmd = cmd + ' integrand_pos=integrand_pos.rsf integrand_neg=integrand_neg.rsf'
-        cmd = cmd + ' %s.rsf > dist.rsf'%name2
+        cmd = cmd + ' < %s.rsf > dist.rsf'%name2
     else:
         cmd = './ot.exe g=%s.rsf t=t.rsf mode=1 < %s.rsf > dist.rsf'%(name1,name2)
     print('cmd = %s'%cmd)
@@ -45,6 +48,10 @@ def w2(name1, name2):
         .replace('\n', '') \
         .replace(' ','') \
         .split(':')[1]
+    if( get_everything ):
+         t = cmd.split(' ')[5:-4]
+         for tt in t:
+             create_idv_graphs(tt.split('=')[-1].replace('.rsf', ''))
     return float(s)
 
 def run_script():

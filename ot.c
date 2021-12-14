@@ -496,9 +496,10 @@ int main(int argc, char* argv[]){
     sf_putint(wass_file, "n3", 1);
     sf_floatwrite(distance_tmp, 1, wass_file);
 
-    int get_detailed_info = 0;
+    int get_detailed_info = 1;
     
     if( get_detailed_info ) {
+        fprintf(stderr, "Getting detailed info\n");
         sf_file p_file, cdffpos_file, cdffneg_file, cdfgpos_file, cdfgneg_file, ff_file, fpos_file, fneg_file, gg_file, gpos_file, gneg_file;
         sf_file qfpos_file, qfneg_file, qgpos_file, qgneg_file, integrandpos_file, integrandneg_file;
         float ***F_pos, ***F_neg, ***G_pos, ***G_neg, *f_pos, *f_neg, *g_pos, *g_neg, ***QFpos, ***QFneg, ***QGpos, ***QGneg, ***integrand_pos, ***integrand_neg;
@@ -523,6 +524,8 @@ int main(int argc, char* argv[]){
         qgneg_file = sf_output("qgneg");
         integrandpos_file = sf_output("integrand_pos");
         integrandneg_file = sf_output("integrand_neg");
+ 
+        fprintf(stderr, "YO!!!\n");
 
         p = sf_floatalloc(np);
         //q = sf_floatalloc3(nz,nx,np);
@@ -549,6 +552,82 @@ int main(int argc, char* argv[]){
         integrand_pos = sf_floatalloc3(nz,nx,np);
         integrand_neg = sf_floatalloc3(nz, nx, np);
 
+
+        int jz, jx;
+
+        sf_putint(fpos_file, "n1", nt);
+        sf_putint(fpos_file, "n2", nx);
+        sf_putint(fpos_file, "n3", nz);
+        sf_putint(fneg_file, "n1", nt);
+        sf_putint(fneg_file, "n2", nx);
+        sf_putint(fneg_file, "n3", nz);
+ 
+
+        sf_putint(gpos_file, "n1", nt);
+        sf_putint(gpos_file, "n2", nx);
+        sf_putint(gpos_file, "n3", nz);
+        sf_putint(gneg_file, "n1", nt);
+        sf_putint(gneg_file, "n2", nx);
+        sf_putint(gneg_file, "n3", nz);
+
+        sf_putint(cdffpos_file, "n1", nt);
+        sf_putint(cdffpos_file, "n2", nx);
+        sf_putint(cdffpos_file, "n3", nz);
+            
+        sf_putint(cdffneg_file, "n1", nt);
+        sf_putint(cdffneg_file, "n2", nx);
+        sf_putint(cdffneg_file, "n3", nz);
+
+        sf_putint(cdfgpos_file, "n1", nt);
+        sf_putint(cdfgpos_file, "n2", nx);
+        sf_putint(cdfgpos_file, "n3", nz);
+
+        sf_putint(cdfgneg_file, "n1", nt);
+        sf_putint(cdfgneg_file, "n2", nx);
+        sf_putint(cdfgneg_file, "n3", nz);
+             
+        for(jz = 0; jz < nz; jz++){
+            for(jx = 0; jx < nx; jx++){
+                split_normalize(f[jz][jx], f_pos, f_neg, t, nt);
+                split_normalize(g[jz][jx], g_pos, g_neg, t, nt);
+        
+                cdf(f_pos, t, F_pos[jz][jx], nt);
+                cdf(f_neg, t, F_neg[jz][jx], nt);
+        
+                cdf(g_pos, t, G_pos[jz][jx], nt);
+                cdf(g_neg, t, G_neg[jz][jx], nt);
+        
+                quantile(p, t, F_pos[jz][jx], QFpos[jz][jx], np, nt);
+                quantile(p, t, F_neg[jz][jx], QFneg[jz][jx], np, nt);
+                quantile(p, t, G_pos[jz][jx], QGpos[jz][jx], np, nt);
+                quantile(p, t, G_neg[jz][jx], QGneg[jz][jx], np, nt);
+        
+                wass_int(integrand_pos[jz][jx], f_pos, g_pos, t,p, nt, np);
+                wass_int(integrand_neg[jz][jx], f_neg, g_neg, t, p, nt, np);
+        
+                //fprintf(stderr, "HERE!!!\n");
+                sf_floatwrite(F_pos[jz][jx], nt, cdffpos_file);
+                //fprintf(stderr, "HERE FIRST!!!\n");
+                sf_floatwrite(F_neg[jz][jx], nt, cdffneg_file);
+                sf_floatwrite(G_pos[jz][jx], nt, cdfgpos_file);
+                sf_floatwrite(G_neg[jz][jx], nt, cdfgneg_file);
+                //fprintf(stderr, "Cumulative dist. works\n");
+                sf_floatwrite(f[jz][jx], nt, ff_file);
+                //fprintf(stderr, "Density writing works\n");
+                sf_floatwrite(f_pos, nt, fpos_file);
+                sf_floatwrite(f_neg, nt, fneg_file);
+                sf_floatwrite(g[jz][jx], nt, gg_file);
+                sf_floatwrite(g_pos, nt, gpos_file);
+                sf_floatwrite(g_neg, nt, gneg_file);
+                sf_floatwrite(p, np, p_file);
+                sf_floatwrite(QFpos[jz][jx], np, qfpos_file);
+                sf_floatwrite(QFneg[jz][jx], np, qfneg_file);
+                sf_floatwrite(QGpos[jz][jx], np, qgpos_file);
+                sf_floatwrite(QGneg[jz][jx], np, qgneg_file);
+                sf_floatwrite(integrand_pos[jz][jx], np, integrandpos_file);
+                sf_floatwrite(integrand_neg[jz][jx], np, integrandneg_file);
+                fprintf(stderr, "YOOOO!!\n");
+        /*
         split_normalize(f[0][0], f_pos, f_neg, t, nt);
         split_normalize(g[0][0], g_pos, g_neg, t, nt);
 
@@ -603,22 +682,9 @@ int main(int argc, char* argv[]){
         sf_floatwrite(QGneg[0][0], np, qgneg_file);
         sf_floatwrite(integrand_pos[0][0], np, integrandpos_file);
         sf_floatwrite(integrand_neg[0][0], np, integrandneg_file);
-
-        // int j;
-        // float total_pos=0.0, total_neg=0.0;
-        // for(j = 0; j < np - 1; j++){
-        //    // //fprintf(stderr, "(j,integrand_pos, int_neg) = (%d, %.8f, %.8f)\n", j, integrand_pos[0][0][j], integrand_neg[0][0][j]);
-        //    float dp = p[j+1] - p[j];
-        //    float avgpos = 0.5 * (integrand_pos[0][0][j+1] + integrand_pos[0][0][j]);
-        //    float avgneg = 0.5 * (integrand_neg[0][0][j+1] + integrand_neg[0][0][j]);
-        //    total_pos += dp * avgpos;
-        //    total_neg += dp * avgneg;
-        // }
-        //fprintf(stderr, "TOTAL_POS, TOTAL_NEG = (%.15f, %15f)\n", total_pos, total_neg);
-
-        fprintf(stderr, "YOOOO!!\n");
+        */
+        }
     }
-
-    // //fprintf(stderr, "HERE AGAIN!!!\n");
+}
 }
 
