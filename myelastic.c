@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
     _dx=1.0/dx;
     sxs = nb + (int) ( ((float) nx) * ssxf );
     dxs = (int) ( ((float) nx) * (esxf - ssxf) / (float) (nxf - 1) );
-    szs = nz + (int) ( ((float) nz) * sszf );
+    szs = nb + (int) ( ((float) nz) * sszf );
     dzs = (int) ( ((float) nz) * (eszf - sszf) / (float) (nzf - 1) );
     
     // fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
@@ -294,10 +294,10 @@ int main(int argc, char* argv[])
             for(isz = 0; isz < nzf; isz++ ){
                 sx =  sxs + isx * dxs;
                 sz = szs + isz * dzs;
-                if( sx < nb ) { fprintf(stderr, "sx = %d\n", sx); sx = 0; }
-                if( sx > nb + nx - 1 ) { fprintf(stderr, "sx=%d\n", sx); sx = nx - 1; }
-                if( sz < nb ) { fprintf(stderr, "sz=%d\n", sz); sz = 0; }
-                if( sz > nb + nz - 1 ) { fprintf(stderr, "sz=%d\n", sz); sz = nz - 1; }
+                if( sx < nb ) { fprintf(stderr, "<x (ssxf, sx) = (%f, %d\n", ssxf, sx); sx = 0; }
+                if( sx > nb + nx - 1 ) { fprintf(stderr, ">x (ssxf, sx)=(%f,%d\n", ssxf, sx); sx = nx - 1; }
+                if( sz < nb ) { fprintf(stderr, "<z (sszf, sz)=(%f, %d)\n", sszf, sz); sz = 0; }
+                if( sz > nb + nz - 1 ) { fprintf(stderr, ">z (nb, nz, nz*sszf, sszf,  sz)=(%d, %d, %f, %f, %d)\n", nb, nz, nz * sszf, sszf,sz); sz = nz - 1; }
                 // fprintf(stderr, "(%d,%d,%d,%d)\n", isx, isz, sx, sz);
                 txx[sx][sz]+=wlt[it];
 	            tzz[sx][sz]+=wlt[it];
