@@ -32,7 +32,7 @@ def create_comp_plots(name1, name2):
 def w2(name1, name2):
     name1 = 'wavz_' + name1 + '_trans'
     name2 = 'wavz_' + name2 + '_trans'
-    get_everything = True
+    get_everything = False
     if( get_everything ):
         cmd = './ot.exe g=%s.rsf t=t.rsf mode=1 p=p.rsf fpos=fpos.rsf fneg=fneg.rsf ff=f.rsf gg=g.rsf gneg=gneg.rsf gpos=gpos.rsf'%name1
         cmd = cmd + ' f_cdfpos=f_cdfpos.rsf f_cdfneg=f_cdfneg.rsf g_cdfpos=g_cdfpos.rsf g_cdfneg=g_cdfneg.rsf'
@@ -71,13 +71,13 @@ def run_script():
     hw2 = np.zeros(len(h_tests))
 
     for (i,v) in enumerate(v_tests):
+        break
         name = 'v_%.2f'%v
         create_idv(name, v, ref_x)
         create_comp_plots('ref_top', name + '_top')
         vw2[i] = w2_lcl(name + '_top')
    
     for (i,h) in enumerate(h_tests):
-        break
         name = 'h_%.2f'%h
         create_idv(name, ref_depth, h)
         create_comp_plots('ref_top', name + '_top') 
@@ -96,7 +96,7 @@ def run_script():
     plt.ylabel('Misfit')
     plt.savefig('horizontal.png')
 
-auto_run = False
+auto_run = True
 
 if( auto_run ):    
     run_script()

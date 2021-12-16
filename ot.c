@@ -496,7 +496,7 @@ int main(int argc, char* argv[]){
     sf_putint(wass_file, "n3", 1);
     sf_floatwrite(distance_tmp, 1, wass_file);
 
-    int get_detailed_info = 1;
+    int get_detailed_info = 0;
     
     if( get_detailed_info ) {
         fprintf(stderr, "Getting detailed info\n");
