@@ -8,8 +8,6 @@ import sys
 from subprocess import check_output as co
 from mode_to_str import *
 
-#ignore me...ssh git test
-
 landscape = True
 inversion = False
 
