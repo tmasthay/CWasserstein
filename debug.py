@@ -5,13 +5,17 @@ from input_dict import get_dict
 import numpy as np
 from subprocess import check_output as co
 import matplotlib.pyplot as plt
+
 def create_top(the_name):
+     print('Create top')
      SeqFlowV('%s_top.rsf'%the_name, '%s.rsf'%the_name, 'window f1=0 n1=1')
 
 def create_idv_plots(the_name):
+     print('create plots')
      SeqFlowV('%s.vpl'%the_name, '%s.rsf'%the_name, 'grey')
 
 def create_idv_graphs(the_name):
+     print('create graphs')
      SeqFlowV('%s.vpl'%the_name, '%s.rsf'%the_name, 'graph')
 
 def create_idv(name, sz, sx):
