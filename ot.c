@@ -84,6 +84,20 @@ void renormalize(float* f, float *x, int N){
     //fprintf(stderr, "max = %.16e\n", max);
 }
 
+void softplus_normalize(float *f, float* x, float b, int N){
+    int i;
+    float C = 0.0;
+    for(i = 0; i < N; i++){
+        f[i] = log(1.0 + exp(b * f[i]));
+    }
+    for(i = 0; i < N; i++){
+        C += 0.5 * (f[i+1] + f[i]) * (x[i+1] - x[i]);
+    }
+    for(i = 0; i < N; i++){
+       f[i] = f[i] / C;
+    }
+}
+
 void split_normalize(float* f, 
     float* f_pos, 
     float* f_neg, 
@@ -372,6 +386,28 @@ float wass2tracesurfabs(float*** f, float*** g, float* t, int nx, int nt, int np
     return wass2tracesliceabs(f, g, t, slice, 1, nx, nt, np);
 }
 
+float wass2tracesurfsp(float*** f, float*** g, float* t, int nx, int nt, int np){
+    float b = 2.0;
+    float total = 0.0;
+    float *p;
+    p = sf_floatalloc(np);
+    p = linspace(0.0, 1.0, np);
+
+    int* slice;
+    slice = sf_intalloc(1);
+    slice[0] = 0;
+   
+    int ix, it;
+    for(ix = 0; ix < nx; ix++){
+        for(it = 0; it < nt; it++){
+           softplus_normalize(f[0][ix], t, b, nt);
+           softplus_normalize(g[0][ix], t, b, nt);
+           total += wass2(f[0][ix], g[0][ix], t, p, nt, np); 
+        }
+    }
+    return total; 
+}
+
 float l2surf(float*** f, float*** g, int nx, int nt){
     float sum=0.0;
     
@@ -480,6 +516,8 @@ int main(int argc, char* argv[]){
             distance = l2total(f,g,nz,nx,nt); break;
         case 5:
             distance = wass2tracesurfabs(f,g,t,nx,nt,np); break;
+        case 6:
+            distance = wass2tracesurfsp(f,g,t,nx,nt,np); break;
         default:
             fprintf(stderr, "Case no. %d not supported. Exiting. \n", mode);
             exit(-1);
