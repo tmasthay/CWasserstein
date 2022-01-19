@@ -9,6 +9,8 @@ def mode_to_str(mode):
         return 'L2 global'
     elif( mode == 5 ):
         return 'W2 trace abs-renormalize surface'
+    elif( mode == 6 ):
+        return 'W2 trace softplus surface'
     else:
         print('Mode not supported...exiting')
         exit(-1)

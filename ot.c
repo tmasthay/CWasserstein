@@ -387,7 +387,7 @@ float wass2tracesurfabs(float*** f, float*** g, float* t, int nx, int nt, int np
 }
 
 float wass2tracesurfsp(float*** f, float*** g, float* t, int nx, int nt, int np){
-    float b = 2.0;
+    float b = 200.0;
     float total = 0.0;
     float *p;
     p = sf_floatalloc(np);
