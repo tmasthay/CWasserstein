@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from unwrap import unwrap
 import copy
@@ -120,8 +121,8 @@ def create_cases(p):
     return dist
                
 def go():
-    nz = 10
-    nx = 10
+    nz = 50
+    nx = 50
     d = {
         'k':2.0,
         'srcz': np.linspace(1.0, 10.0, nz),
@@ -133,7 +134,7 @@ def go():
         'dz':0.1,
         'dx':0.1,
         'ref': False,
-        'ot_mode': 2
+        'ot_mode': int(sys.argv[1])
     }
 
     sz_ref = d['srcz'][int(nz / 2)]

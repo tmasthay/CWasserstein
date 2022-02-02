@@ -21,9 +21,10 @@ float* linspace(float a, float b, int N){
 
     delta = (b-a) / (N-1);
 
-    for(i = 1; i < N; i++){
+    for(i = 1; i < N-1; i++){
         x[i] = x[i-1] +  delta;
     }
+    x[N-1] = b;
     return x;
 }
 
@@ -218,14 +219,16 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         f_int += dx * avgf;
         g_int += dx * avgg;
     }
+    fprintf(stderr, "f_int = %f\n", f_int);
+    fprintf(stderr, "g_int = %f\n", g_int);
     float tol = 0.0;
     float support_penalty = 10.0;
     if( f_int <= tol && g_int <= tol ) {
-        //fprintf(stderr, "Support complements agree\n");
+        fprintf(stderr, "Support complements agree\n");
         return 0.0;
     }
     if( (f_int <= tol && g_int > tol) || (f_int > tol && g_int <= tol) ){
-        //fprintf(stderr, "Support ISSUES\n");
+        fprintf(stderr, "Support ISSUES\n");
         return support_penalty;
     }
 
@@ -239,10 +242,15 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         //float dp = p[ip+1] - p[ip];
         //float avg = y[ip+1] + y[ip];
         sum = sum + 0.5 * (p[ip+1] - p[ip]) * (y[ip+1] + y[ip]);
+//        fprintf(stderr, "sum[%d] = %f\n", ip, sum);
+        if( ip == P-2 ){
+            fprintf(stderr, "FINAL = %f\n", p[ip+1]);
+        }
 
         //fprintf(stderr, "(dp, avg, sum) = (%.15f, %.15f, %.15f)\n", dp, avg, sum);
     }
     //sum = integrate(y, linspace(0.0, 1.0, 10*N), 10*N);
+    fprintf(stderr, "\n\n\n\nRETURNING: %f\n\n\n\n", sum);
     return sum;
 }
 
@@ -296,7 +304,8 @@ float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int n
     int iz, ix;
 
     p = sf_floatalloc(np);
-    p = linspace(0.0, 1.0, np);
+    //p = linspace(0.0, 1.0, np);
+    p = linspace(0.01, 0.99, np);
 
     fprintf(stderr, "initialized sum = %.16e", sum);
     for(iz = 0; iz < nz; iz++){
