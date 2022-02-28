@@ -8,6 +8,9 @@ import sys
 from subprocess import check_output as co
 from mode_to_str import *
 
+
+#Usage
+# python SConstruct modes=[] grid=[nz,nx] threshold=0
 #ignore me...ssh git test
 
 landscape = True
@@ -56,7 +59,8 @@ def setup_output_directory(case_name):
 def run_mode(mode):
     if( landscape ):
         t = time()
-        
+
+        print('yo1')        
         zx_dims = parse('grid')
         if( type(zx_dims) == type(None) ):
             nz = 10

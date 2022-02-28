@@ -63,17 +63,27 @@ def process(x, d):
             '''%(d['v0'], d['dv']))
     #input(x)
 
-    SeqFlowLcl(x + '_top_hrt', x + '_top', 
-            '''
-            veltran adj=%s nx=%d dx=%f x0=%f
-            '''%(d['adj'], d['nx'], d['dx'], d['x0']))
+#    SeqFlowLcl(x + '_top_hrt', x + '_top', 
+#            '''
+#            veltran adj=%s nx=%d dx=%f x0=%f
+#            '''%(d['adj'], d['nx'], d['dx'], d['x0']))
+
+    SeqFlow(x + '_top_lrt', x + '_top',
+        '''
+        radon adj=y dp=0.01 p0=-5.0 np=1000
+        ''')
+
     SeqPlotLcl(x + '_top', x + '_top', 
             '''
             grey color=seismic.csv scalebar=y title="%s_top"
             '''%x)
-    SeqPlotLcl(x + '_top_hrt', x + '_top_hrt', 
+#    SeqPlotLcl(x + '_top_hrt', x + '_top_hrt', 
+#            '''
+#            grey color=seismic.csv scalebar=y title="%s_top_hrt"
+#            '''%x)
+    SeqPlotLcl(x + '_top_lrt', x + '_top_lrt', 
             '''
-            grey color=seismic.csv scalebar=y title="%s_top_hrt"
+            grey color=seismic.csv scalebar=y title="%s_top_lrt"
             '''%x)
     ##input('yo4')
 
@@ -83,8 +93,8 @@ def combine(x,y,d):
     comparison = d['output']
     t0 = x + '_top'
     t1 = y + '_top'
-    b0 = x + '_top_hrt'
-    b1 = y + '_top_hrt'
+    b0 = x + '_top_lrt'
+    b1 = y + '_top_lrt'
     inputs = '.vpl '.join([t0,t1,b0,b1, ''])[:-1]
     system('vppen gridnum=2,2 %s > %s.vpl'%(inputs, comparison))
 

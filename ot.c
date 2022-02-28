@@ -151,7 +151,7 @@ void quantile(float* p, float* x, float* F, float* G, int Np, int Nx){
                 }
                 else{
                     float t = (F[ix] - p[ip]) / (F[ix] - F[ix-1]);
-                    fprintf(stderr, "t = %f\n", t);
+                    //fprintf(stderr, "t = %f\n", t);
                     G[ip] = t * x[ix-1] + (1-t) * x[ix];
                 }
                // ////fprintf(stderr, "(ix, sx, p, G) = (%d, %d, %.8f, %.8f)\n", ix, sx, p[ip], G[ip]);
@@ -219,8 +219,8 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         f_int += dx * avgf;
         g_int += dx * avgg;
     }
-    fprintf(stderr, "f_int = %f\n", f_int);
-    fprintf(stderr, "g_int = %f\n", g_int);
+    //fprintf(stderr, "f_int = %f\n", f_int);
+    //fprintf(stderr, "g_int = %f\n", g_int);
     float tol = 0.0;
     float support_penalty = 10.0;
     if( f_int <= tol && g_int <= tol ) {
