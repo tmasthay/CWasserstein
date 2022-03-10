@@ -5,6 +5,7 @@ from os import system
 from subprocess import check_output as co
 import copy
 import numpy as np
+import signal
 
 SeqFlowLcl = SeqFlow
 SeqPlotLcl = SeqPlot
@@ -13,14 +14,25 @@ global d_forward
 global d_veltran
 global mode
 
+N = 100
+
+nz = N
+dz = 1.0 / nz
+
+nx = N
+dx = 1.0 / nx
+
+nt = 400
+dt = 5e-03
+
 d_forward = {
         'case' : 'synthetic',
-        'nz' : 100,
-        'dz' : 1.0 / 100.0,
-        'nx' : 100,
-        'dx' : 1.0 / 100.0,
-        'dt' :  5e-03,
-        'nt' :  1000,
+        'nz' : nz,
+        'dz' : dz,
+        'nx' : nx,
+        'dx' : dx,
+        'dt' :  dt,
+        'nt' :  nt,
         'sszf' :  0.5,
         'ssxf' :  0.5,
         'eszf' :  0.5,
@@ -51,16 +63,19 @@ def get_val(s):
     try:
         return float(s.split(':')[-1].replace('\n','').replace(' ',''))
     except:
-        input('get_val error: Press enter to dump s before exiting')
-        print(s)
-        exit(-1)
+        print('Sending alarm after failed to convert float')
+        signal.alarm(5)
 
 def process(x, d):
+    t = time()
+    print('Entering process')
     SeqFlowLcl(x + '_top', x,
             '''
             window n1=1 f1=0 | 
             put v0=%f dv=%f
             '''%(d['v0'], d['dv']))
+    t1 = time()
+    print('top time: %.4f'%(t1 - t))
     #input(x)
 
 #    SeqFlowLcl(x + '_top_hrt', x + '_top', 
@@ -70,13 +85,17 @@ def process(x, d):
 
     SeqFlow(x + '_top_lrt', x + '_top',
         '''
-        radon adj=y dp=0.01 p0=-5.0 np=1000
+        radon adj=y dp=0.1 p0=-5.0 np=100
         ''')
+    t2 = time()
+    print('radon time: %.4f'%(t2 - t1))
 
     SeqPlotLcl(x + '_top', x + '_top', 
             '''
             grey color=seismic.csv scalebar=y title="%s_top"
             '''%x)
+    t3 = time()
+    print('top plot time: %.4f'%(t3 - t2))
 #    SeqPlotLcl(x + '_top_hrt', x + '_top_hrt', 
 #            '''
 #            grey color=seismic.csv scalebar=y title="%s_top_hrt"
@@ -85,7 +104,10 @@ def process(x, d):
             '''
             grey color=seismic.csv scalebar=y title="%s_top_lrt"
             '''%x)
+    t4 = time()
+    print('lrt plot time: %.4f'%(t4-t3))
     ##input('yo4')
+    print('Exiting process...total time: %.4f seconds'%(t4 - t))
 
 def combine(x,y,d):
     global mode
@@ -130,8 +152,8 @@ def run_case(d, reference_name):
     xc = combine(namex, 'wavx_' + reference_name, {'output': 'cmp_x_' + d['case']})
     distance = zc + xc
 
-    os.system('rm /var/tmp/%s*.rsf@'%namez)
-    os.system('rm /var/tmp/%s*.rsf@'%namex)
+    #os.system('rm /var/tmp/%s*.rsf@'%namez)
+    #os.system('rm /var/tmp/%s*.rsf@'%namex)
 
     return distance
 
@@ -151,6 +173,7 @@ def run_test(my_pts):
     misfits = []
     N = len(my_pts)
     for (i,pt) in enumerate(my_pts):
+        print(i)
         t = time()
         misfits.append(run_case_short(pt[0], pt[1]))
         print('Iteration %d of %d took %.4f seconds'%(i,N,time() - t))

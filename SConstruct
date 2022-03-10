@@ -7,7 +7,9 @@ from time import time
 import sys
 from subprocess import check_output as co
 from mode_to_str import *
+import signal
 
+global TOP_DIR
 
 #Usage
 # python SConstruct modes=[] grid=[nz,nx] threshold=0
@@ -24,6 +26,7 @@ def parse(s):
         return None
 
 def setup_output_directory(case_name):
+    global TOP_DIR
     fig_dir = '../figures'
     date_info = co('date',shell=True) \
         .decode('utf-8') \
@@ -54,10 +57,29 @@ def setup_output_directory(case_name):
         .split('commit')[1] \
         .split()[0])
 
+    if( not os.path.exists( top_dir + '/vpl_files' ) ):
+        os.system('mkdir %s'%(top_dir + '/vpl_files'))
+
+    if( not os.path.exists( top_dir + '/rsf_files' ) ):
+        os.system('mkdir %s'%(top_dir + '/rsf_files'))
+
     return top_dir
 
+def move_intermediate_files(top_dir):
+    print('MOVING INTERMEDIATE RSF AND VPL FILES')
+    os.system('mv *.vpl %s/vpl_files'%top_dir)
+    os.system('mv *.rsf %s/rsf_files'%top_dir)
+
+def handler(signum, frame):
+    global TOP_DIR
+    input('CTRL+C PRESSED: EXITING AFTER MOVING FILES')
+    move_intermediate_files(TOP_DIR)
+    exit(1)
+    
 def run_mode(mode):
     if( landscape ):
+        global TOP_DIR
+        signal.signal(signal.SIGINT, handler)
         t = time()
 
         print('yo1')        
@@ -98,6 +120,8 @@ def run_mode(mode):
         np.save(case_dir + 'Z.npy', Z)
         np.save(case_dir + 'X.npy', X)
         np.save(case_dir + 'misfits.npy', misfits)
+
+        move_intermediate_files(TOP_DIR)
         
         print('Total time: %.4f'%(time() - t))
     
@@ -111,5 +135,8 @@ def go():
             run_mode(m)
     else:
         run_mode(1)
+
+signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGALRM, handler)
 
 go()

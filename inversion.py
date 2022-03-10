@@ -22,7 +22,7 @@ def get_val(s):
     try:
         return float(s.split(':')[-1].replace('\n','').replace(' ',''))
     except:
-        input('get_val error: Press enter to dump s before exiting')
+        print('get_val error: string below...')
         print(s)
         exit(-1)
 
