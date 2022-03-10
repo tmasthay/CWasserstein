@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
 {
     bool verb;
     int jt, ft, kt, it, ib, ix, iz, sx, sz, sxs, dxs, szs, dzs, isx, isz, nxf, nzf;
-    float a, ssxf, sszf, esxf, eszf, *wlt, *bndr;
+    float a, ssxf, sszf, esxf, eszf, amp, *wlt, *bndr;
     float **vp0, **vs0, **rho0, **vp, **vs, **rho, **uvx, **uvz, **txx, **tzz, **txz;
 
     sf_file Fvp, Fvs, Frho, Fwavx, Fwavz;
@@ -221,6 +221,7 @@ int main(int argc, char* argv[])
     if (!sf_getfloat("sszf",&sszf)) sszf=0.25; /* z-source location */
     if (!sf_getfloat("eszf", &eszf)) eszf=0.75; /* end of z-source locations */
     if (!sf_getint("nzf", &nzf)) nzf = 2; /* number of sources in z direction */
+    if (!sf_getfloat("amp", &amp)) amp=1.0;
 
     sf_putint(Fwavz, "n1", nz);
     sf_putint(Fwavz, "n2", nx);
@@ -261,7 +262,7 @@ int main(int argc, char* argv[])
     for(it=0;it<nt;it++)
     {
 	a=SF_PI*fm*(it*dt-1.0/fm);a*=a;
-	wlt[it]=(1.0-2.0*a)*expf(-a);
+	wlt[it]=amp*(1.0-2.0*a)*expf(-a);
     }
     for(ib=0;ib<nb;ib++)
     {

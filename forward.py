@@ -46,6 +46,9 @@ def  forward(d):
     #Ricker frequency
     fm = d['fm']
 
+    #amplitude
+    amp = d['amp']
+
     def create_field(fexpr, field_name, input_file=None):
         if( input_file != None ):
             input_file = input_file.replace('.rsf', '') + '.rsf'
@@ -62,6 +65,7 @@ def  forward(d):
     def forward_command(nbt, fmt, dtt, ssxft, sszft, esxft, eszft, nxft, nzft,kt):
         s = 'nb=%d fm=%d dt=%.15f nt=%s kt=%s ssxf=%s sszf=%s'%(nbt,fmt,dtt,kt,kt,ssxft,sszft)
         s = s + ' esxf=%s eszf=%s nxf=%s nzf=%s'%(esxft, eszft, nxft, nzft)
+        s = s + ' amp=%.4f'%amp
         t = './${SOURCES[3]} vs=${SOURCES[1]} rho=${SOURCES[2]} wavx=${TARGETS[1]}'
         return t + ' ' + s
 

@@ -22,7 +22,7 @@ dz = 1.0 / nz
 nx = N
 dx = 1.0 / nx
 
-nt = 400
+nt = 1000
 dt = 5e-03
 
 d_forward = {
@@ -41,6 +41,7 @@ d_forward = {
         'nsx' :  1,
         'nb' : 35,
         'fm' : 5.0,
+        'amp': 10000.0,
         'vp': '0.5',
         'vs': '0.707 * input',
         'rho': '1.0'
@@ -85,7 +86,7 @@ def process(x, d):
 
     SeqFlow(x + '_top_lrt', x + '_top',
         '''
-        radon adj=y dp=0.1 p0=-5.0 np=100
+        sftransp plane=12 | radon adj=y dp=4 p0=-800 np=400
         ''')
     t2 = time()
     print('radon time: %.4f'%(t2 - t1))
