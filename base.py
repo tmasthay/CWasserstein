@@ -9,6 +9,9 @@ def create_base():
     
     nt = 1000
     dt = 5e-03
+
+    def create_vp():
+         
     
     d_forward = {
             'case' : 'synthetic',
