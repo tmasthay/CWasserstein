@@ -65,14 +65,13 @@ def  forward(d):
                     math output="%s" n1=%s n2=%s d1=%.15f d2=%.15f
                     label1=x1 unit1=km label2=x2 unit2=km
                     '''%(fexpr, n1, n2, d1, d2))
-             else:
+            else:
                  filename = s[0]
                  cmd = s[1]
                  if( not os.path.exists(s[0]) ):
                      exec(cmd)
         else:
-            print('Functional implementation not ready yet.')
-            exit(-1)
+            fexpr(get_field(field_name, True))
              
     def forward_command(nbt, fmt, dtt, ssxft, sszft, esxft, eszft, nxft, nzft,kt):
         s = 'nb=%d fm=%d dt=%.15f nt=%s kt=%s ssxf=%s sszf=%s'%(nbt,fmt,dtt,kt,kt,ssxft,sszft)
