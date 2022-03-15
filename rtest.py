@@ -6,6 +6,7 @@ from subprocess import check_output as co
 import copy
 import numpy as np
 import signal
+from base import create_base
 
 SeqFlowLcl = SeqFlow
 SeqPlotLcl = SeqPlot
@@ -13,48 +14,11 @@ SeqPlotLcl = SeqPlot
 global d_forward
 global d_veltran
 global mode
+global do_radon
 
-N = 100
+do_radon = False
 
-nz = N
-dz = 1.0 / nz
-
-nx = N
-dx = 1.0 / nx
-
-nt = 1000
-dt = 5e-03
-
-d_forward = {
-        'case' : 'synthetic',
-        'nz' : nz,
-        'dz' : dz,
-        'nx' : nx,
-        'dx' : dx,
-        'dt' :  dt,
-        'nt' :  nt,
-        'sszf' :  0.5,
-        'ssxf' :  0.5,
-        'eszf' :  0.5,
-        'esxf' :  0.5,
-        'nsz' :  1,
-        'nsx' :  1,
-        'nb' : 35,
-        'fm' : 5.0,
-        'amp': 10000.0,
-        'vp': '0.5',
-        'vs': '0.707 * input',
-        'rho': '1.0'
-}
-
-d_veltran = {
-        'v0': 0.5,
-        'dv': 0.01,
-        'adj': 'n',
-        'nx': 100,
-        'dx': 0.01,
-        'x0': 0
-}
+d_forward = create_base()
 
 def set_mode(the_mode):
      global mode
@@ -64,77 +28,83 @@ def get_val(s):
     try:
         return float(s.split(':')[-1].replace('\n','').replace(' ',''))
     except:
-        print('Sending alarm after failed to convert float')
-        signal.alarm(5)
+        return 1e10
 
 def process(x, d):
+    global do_radon
+
     t = time()
     print('Entering process')
     SeqFlowLcl(x + '_top', x,
             '''
             window n1=1 f1=0 | 
-            put v0=%f dv=%f
-            '''%(d['v0'], d['dv']))
-    t1 = time()
-    print('top time: %.4f'%(t1 - t))
-    #input(x)
+            put d2=%.4f unit2=s label2=Time
+            '''%(d['dt']))
 
-#    SeqFlowLcl(x + '_top_hrt', x + '_top', 
-#            '''
-#            veltran adj=%s nx=%d dx=%f x0=%f
-#            '''%(d['adj'], d['nx'], d['dx'], d['x0']))
-
-    SeqFlow(x + '_top_lrt', x + '_top',
+    SeqPlotLcl(x + '_top', x + '_top',
         '''
-        sftransp plane=12 | radon adj=y dp=4 p0=-800 np=400
-        ''')
-    t2 = time()
-    print('radon time: %.4f'%(t2 - t1))
+        grey color=seismic.csv scalebar=y title="%s_top"
+        '''%x)
 
-    SeqPlotLcl(x + '_top', x + '_top', 
+    if( do_radon ):
+        SeqFlow(x + '_top_lrt', x + '_top',
             '''
-            grey color=seismic.csv scalebar=y title="%s_top"
-            '''%x)
-    t3 = time()
-    print('top plot time: %.4f'%(t3 - t2))
-#    SeqPlotLcl(x + '_top_hrt', x + '_top_hrt', 
-#            '''
-#            grey color=seismic.csv scalebar=y title="%s_top_hrt"
-#            '''%x)
-    SeqPlotLcl(x + '_top_lrt', x + '_top_lrt', 
-            '''
-            grey color=seismic.csv scalebar=y title="%s_top_lrt"
-            '''%x)
+            sftransp plane=12 | radon adj=y dp=4 p0=-800 np=400
+            ''')
+    
+        SeqPlotLcl(x + '_top', x + '_top', 
+                '''
+                grey color=seismic.csv scalebar=y title="%s_top"
+                '''%x)
+        SeqPlotLcl(x + '_top_lrt', x + '_top_lrt', 
+                '''
+                grey color=seismic.csv scalebar=y title="%s_top_lrt"
+                '''%x)
     t4 = time()
-    print('lrt plot time: %.4f'%(t4-t3))
-    ##input('yo4')
     print('Exiting process...total time: %.4f seconds'%(t4 - t))
 
 def combine(x,y,d):
+    #retrieve global variables
     global mode
+    global do_radon
 
+    #get output file name
     comparison = d['output']
+
+
+    #get surface data input file name
     t0 = x + '_top'
     t1 = y + '_top'
-    b0 = x + '_top_lrt'
-    b1 = y + '_top_lrt'
-    inputs = '.vpl '.join([t0,t1,b0,b1, ''])[:-1]
-    system('vppen gridnum=2,2 %s > %s.vpl'%(inputs, comparison))
 
-    t_mode='x.rsf'
-    #t_mode = 't.rsf'
+    if(do_radon):
+        b0 = x + '_top_lrt'
+        b1 = y + '_top_lrt'
+        inputs = '.vpl '.join([t0,t1,b0,b1, ''])[:-1]
+        system('vppen gridnum=2,2 %s > %s.vpl'%(inputs, comparison))
+
+    #define command for Wasserstein distance
+    t_mode = 't.rsf'
     cmd='./ot.exe g=${SOURCES[1]} t=%s mode=%d'%(t_mode, mode)
 
-    c0 = t0 + '_trans'
-    c1 = t1 + '_trans'
-    plane=13 if t_mode[0] == 'x' else 23
-#    SeqFlowLcl(c0, t0, 'transp plane=23 | transp plane=12')
-#    SeqFlowLcl(c1, t1, 'transp plane=23 | transp plane=12')
-    SeqFlowLcl(c0, t0, 'transp plane=%d'%plane)
-    SeqFlowLcl(c1, t1, 'transp plane=%d'%plane)
-    SeqFlowLcl('dist', '%s.rsf %s.rsf'%(c0, c1), cmd)
-    #SeqFlowLcl('dist', '%s.rsf %s.rsf'%(c0, c1), cmd)
-    #SeqFlowLcl('dist', '%s.rsf %s.rsf'%(t0, t1), cmd.replace('x.rsf','t.rsf'))
+
+    #take Wasserstein distance between radon transforms 
+    if( do_radon ):
+        b0 = x + '_top_lrt'
+        b1 = y + '_top_lrt'
+        c0 = t0 + '_trans'
+        c1 = t1 + '_trans'
+        plane=23
+        SeqFlowLcl(c0, b0, 'transp plane=%d'%plane)
+        SeqFlowLcl(c1, b1, 'transp plane=%d'%plane)
+        SeqFlowLcl('dist', '%s.rsf %s.rsf'%(c0, c1), cmd)
+    #else take Wasserstein distance between original signals
+    else:
+        c0 = t0 + '_trans'
+        c1 = t1 + '_trans'
+        plane=23
+        SeqFlowLcl(c0, t0, 'transp plane=%d'%plane)
+        SeqFlowLcl(c1, t1, 'transp plane=%d'%plane)
+        SeqFlowLcl('dist', '%s.rsf %s.rsf'%(c0, c1), cmd)
 
     return get_val(co('sfdisfil < dist.rsf', shell=True).decode('utf-8'))
 
@@ -145,16 +115,21 @@ def run_case(d, reference_name):
     namez = 'wavz_' + d['case']
     namex = 'wavx_' + d['case']
 
-    process(namez, d_veltran)
-    process(namex, d_veltran)
+#    process(namez, d_veltran)
+#    process(namex, d_veltran)
+    process(namez, d)
+    process(namex, d)
 
     d_output = {'output': 'compare_' + d['case']}
     zc = combine(namez, 'wavz_' + reference_name, {'output': 'cmp_z_' + d['case']})
     xc = combine(namex, 'wavx_' + reference_name, {'output': 'cmp_x_' + d['case']})
-    distance = zc + xc
+    if( type(zc) == type(None) or type(xc) == type(None) ):
+        distance = 1e10
+    else:
+        distance = zc + xc
 
-    #os.system('rm /var/tmp/%s*.rsf@'%namez)
-    #os.system('rm /var/tmp/%s*.rsf@'%namex)
+    os.system('rm /var/tmp/%s*.rsf@'%namez)
+    os.system('rm /var/tmp/%s*.rsf@'%namex)
 
     return distance
 
@@ -189,5 +164,6 @@ if( not os.path.exists('x.rsf') ):
 
 if( not os.path.exists('wavz_' + d_forward['case'] + '.rsf') ):
     forward(d_forward)
-    process('wavz_' + d_forward['case'], d_veltran)
-    process('wavx_' + d_forward['case'], d_veltran)
+    process('wavz_' + d_forward['case'], d_forward)
+    process('wavx_' + d_forward['case'], d_forward)
+    print('wavz_' + d_forward['case'] + '_top.rsf should exist')

@@ -1,4 +1,4 @@
-from rsf.proj import *
+from rsf.proj import * 
 from rtest import *
 import numpy as np
 from itertools import product
@@ -107,13 +107,18 @@ def run_mode(mode):
         Z,X = np.meshgrid(z,x)
         misfits = misfits.reshape(Z.shape)
 
+        print('Z:\n%s'%Z)
+        print('X:\n%s'%X)
+        print('misfits:\n%s'%misfits)
+
         plt_title = mode_to_str(mode)
         dir = setup_output_directory(plt_title)
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        ax.plot_surface(Z,X,misfits)
-        ax.set_xlabel('Z')
-        ax.set_ylabel('X')
+        fig,ax = plt.subplots()
+        img = plt.imshow(misfits, \
+            extent=[np.min(Z), np.max(Z), np.min(X), np.max(X)])
+        fig.colorbar(img, ax=ax)
+        plt.xlabel('Z')
+        plt.ylabel('X')
         plt.title(plt_title)
         case_dir = dir + '/' + '_'.join(plt_title.split(' '))
         plt.savefig(case_dir + '.png')
@@ -121,7 +126,11 @@ def run_mode(mode):
         np.save(case_dir + 'X.npy', X)
         np.save(case_dir + 'misfits.npy', misfits)
 
-        move_intermediate_files(TOP_DIR)
+
+        os.system('cp %s.png .'%(case_dir))
+        os.system('mv %s.png 1.png'%(case_dir.split('/')[-1]))
+        print(case_dir)
+        #move_intermediate_files(TOP_DIR)
         
         print('Total time: %.4f'%(time() - t))
     
