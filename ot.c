@@ -224,7 +224,7 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
     float tol = 0.0;
     float support_penalty = 10.0;
     if( f_int <= tol && g_int <= tol ) {
-        fprintf(stderr, "Support complements agree\n");
+        //fprintf(stderr, "Support complements agree\n");
         return 0.0;
     }
     if( (f_int <= tol && g_int > tol) || (f_int > tol && g_int <= tol) ){
@@ -244,13 +244,13 @@ float wass2(float* f, float* g, float* x, float*p, int N, int P){
         sum = sum + 0.5 * (p[ip+1] - p[ip]) * (y[ip+1] + y[ip]);
 //        fprintf(stderr, "sum[%d] = %f\n", ip, sum);
         if( ip == P-2 ){
-            fprintf(stderr, "FINAL = %f\n", p[ip+1]);
+            //fprintf(stderr, "FINAL = %f\n", p[ip+1]);
         }
 
         //fprintf(stderr, "(dp, avg, sum) = (%.15f, %.15f, %.15f)\n", dp, avg, sum);
     }
     //sum = integrate(y, linspace(0.0, 1.0, 10*N), 10*N);
-    fprintf(stderr, "\n\n\n\nRETURNING: %f\n\n\n\n", sum);
+    //fprintf(stderr, "\n\n\n\nRETURNING: %f\n\n\n\n", sum);
     return sum;
 }
 
@@ -307,19 +307,19 @@ float wass2trace(float*** f, float*** g, float* t, int nz, int nx, int nt, int n
     //p = linspace(0.0, 1.0, np);
     p = linspace(0.01, 0.99, np);
 
-    fprintf(stderr, "initialized sum = %.16e", sum);
+    //fprintf(stderr, "initialized sum = %.16e", sum);
     for(iz = 0; iz < nz; iz++){
         for(ix = 0; ix < nx; ix++){
             float tmp = wass2_split(f[iz][ix], g[iz][ix], t, p, nt, np);
             sum += tmp;
             if( tmp > 100 ){
-                fprintf(stderr, "(iz,ix,tmp) = (%d, %d, %f)\n", iz,ix,tmp);
+                //fprintf(stderr, "(iz,ix,tmp) = (%d, %d, %f)\n", iz,ix,tmp);
                 sleep(1);
             }
             //fprintf(stderr, "(sum,curr) = (%f,%f)\n", sum, tmp);
         }
     }
-    fprintf(stderr, "wass2^2 = %.16e\n", sum);
+    //fprintf(stderr, "wass2^2 = %.16e\n", sum);
     return sum;
 }
 
@@ -445,9 +445,9 @@ float l2total(float*** f, float*** g, int nz, int nx, int nt){
     return sum;
 }
 
-float w2squaretotal(float*** f, float*** g,
+float wass2squaretotal(float*** f, float*** g,
                     float* t, float* p,
-                    int nz, int nx, int nt){
+                    int nz, int nx, int nt, int np){
     float sum=0.0;
    
     int iz, ix, it;
@@ -459,7 +459,7 @@ float w2squaretotal(float*** f, float*** g,
             }
             renormalize(f[iz][ix], t, nt);
             renormalize(g[iz][ix], t, nt); 
-            sum += wass2(f, g, t, p, nt, np);
+            sum += wass2(f[iz][ix], g[iz][ix], t, p, nt, np);
         }
     }
     return sum;
@@ -548,7 +548,7 @@ int main(int argc, char* argv[]){
         case 6:
             distance = wass2tracesurfsp(f,g,t,nx,nt,np); break;
         case 7:
-            distance = wass2squaretotal(f,g,t,p,nx,nt,np); break;
+            distance = wass2squaretotal(f,g,t,p,nz,nx,nt,np); break;
         default:
             fprintf(stderr, "Case no. %d not supported. Exiting. \n", mode);
             exit(-1);

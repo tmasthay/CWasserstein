@@ -112,7 +112,7 @@ def run_mode(mode):
         print('misfits:\n%s'%misfits)
 
         plt_title = mode_to_str(mode)
-        dir = setup_output_directory(plt_title)
+        my_dir = setup_output_directory(plt_title)
         fig,ax = plt.subplots()
         img = plt.imshow(misfits, \
             extent=[np.min(Z), np.max(Z), np.min(X), np.max(X)])
@@ -120,7 +120,7 @@ def run_mode(mode):
         plt.xlabel('Z')
         plt.ylabel('X')
         plt.title(plt_title)
-        case_dir = dir + '/' + '_'.join(plt_title.split(' '))
+        case_dir = my_dir + '/' + '_'.join(plt_title.split(' '))
         plt.savefig(case_dir + '.png')
         np.save(case_dir + 'Z.npy', Z)
         np.save(case_dir + 'X.npy', X)

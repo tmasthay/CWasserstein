@@ -36,13 +36,13 @@ def create_base():
             'nb' : 35,
             'fm' : 5.0,
             'amp': 1000.0,
-            'vp': '0.5 + 10*sin(x1+x2)',
-            'vs': '0.707 * input',
-            'rho': '1.0'
+            'vp_expr': '0.5 + 10*sin(x1+x2)',
+            'vs_expr': '0.707 * input',
+            'rho_expr': '1.0'
     }
 
     def create_vp(the_name):
-        layer_vals = [5, 10, 15]
+        layer_vals = [0.5, 0.5, 0.5]
         layer_ends = [0.25, 0.75]
         
         x = np.linspace(0,1,nx)
@@ -59,7 +59,7 @@ def create_base():
         f.write(layers_full)
 
     def create_vs(the_name):
-        layer_vals = [5, 10, 15]
+        layer_vals = [0.5, 0.5, 0.5]
         layer_ends = [0.25, 0.75]
         
         x = np.linspace(0,1,nx)
@@ -74,7 +74,19 @@ def create_base():
         f.put('n2', nx)
         f.write(layers_full)
 
+    def create_rho(the_name):
+        Flow(the_name, None, 
+            'math output=%s d1=%.f n1=%d d2=%.4f n2=%d'%(
+                d_forward['rho_expr'],
+                d_forward['dz'], d_forward['nz'], 
+                d_forward['dx'], d_forward['nx']))
+
     d_forward['vp'] = create_vp
     d_forward['vs'] = create_vs
+    d_forward['rho'] = create_rho
+
+    d_forward['vp_name'] = 'vp'
+    d_forward['vs_name'] = 'vs'
+    d_forward['rho_name'] = 'rho'
     
     return d_forward

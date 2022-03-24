@@ -18,6 +18,9 @@ global do_radon
 do_radon = False
 
 d_forward = create_base()
+d_forward['vp'](d_forward['vp_name'] + '_' + d_forward['case'])
+d_forward['vs'](d_forward['vs_name'] + '_' + d_forward['case'])
+d_forward['rho'](d_forward['rho_name'] + '_' + d_forward['case'])
 
 def set_mode(the_mode):
      global mode

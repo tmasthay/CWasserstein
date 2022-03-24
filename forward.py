@@ -1,7 +1,7 @@
 #from rsf.proj import *
 from seqflow import *
 
-SeqFlowLcl = SeqFlow
+SeqFlowLcl = SeqFlowV
 
 def  forward(d):
     #case name tag
