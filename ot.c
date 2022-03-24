@@ -445,6 +445,26 @@ float l2total(float*** f, float*** g, int nz, int nx, int nt){
     return sum;
 }
 
+float w2squaretotal(float*** f, float*** g,
+                    float* t, float* p,
+                    int nz, int nx, int nt){
+    float sum=0.0;
+   
+    int iz, ix, it;
+    for(iz = 0; iz < nz; iz++){
+        for(ix = 0; ix < nx; ix++){
+            for(it = 0; it < nt; it++){
+                f[iz][ix][it] = f[iz][ix][it] * f[iz][ix][it];
+                g[iz][ix][it] = g[iz][ix][it] * g[iz][ix][it];
+            }
+            renormalize(f[iz][ix], t, nt);
+            renormalize(g[iz][ix], t, nt); 
+            sum += wass2(f, g, t, p, nt, np);
+        }
+    }
+    return sum;
+}
+
 int main(int argc, char* argv[]){
     //assume structured grid
     int nz, nx, nt, nt_true, nz_check, nx_check, nt_check, mode;
@@ -527,6 +547,8 @@ int main(int argc, char* argv[]){
             distance = wass2tracesurfabs(f,g,t,nx,nt,np); break;
         case 6:
             distance = wass2tracesurfsp(f,g,t,nx,nt,np); break;
+        case 7:
+            distance = wass2squaretotal(f,g,t,p,nx,nt,np); break;
         default:
             fprintf(stderr, "Case no. %d not supported. Exiting. \n", mode);
             exit(-1);

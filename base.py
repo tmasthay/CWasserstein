@@ -48,13 +48,15 @@ def create_base():
         x = np.linspace(0,1,nx)
 
         layers = layered_medium(layer_vals, layer_ends, x)
-        m8r.File(layers, the_name + '.rsf')
-        
-        Flow(the_name, the_name, 
-        '''
-            sfput d1=%.4f n1=%d label1=Z unit1=m
-                d2=%.4f n2=%d label2=X unit2=m
-        '''%(dz, nz, dx, nx))
+        layers_full = np.array([layers for i in range(nz)])
+        f = m8r.Output(the_name + '.rsf')
+
+        f.put('d1', dz)
+        f.put('d2', dx)
+        f.put('n1', nz)
+        f.put('n2', nx)
+
+        f.write(layers_full)
 
     def create_vs(the_name):
         layer_vals = [5, 10, 15]
@@ -64,13 +66,13 @@ def create_base():
 
         s_factor = 0.707
         layers = s_factor * layered_medium(layer_vals, layer_ends, x)
-        m8r.File(layers, the_name + '.rsf')
-        
-        Flow(the_name, the_name, 
-        '''
-            sfput d1=%.4f n1=%d label1=Z unit1=m
-                d2=%.4f n2=%d label2=X unit2=m
-        '''%(dz, nz, dx, nx))
+        layers_full = np.array([layers for i in range(nz)])
+        f = m8r.Output(the_name + '.rsf')
+        f.put('d1', dz)
+        f.put('d2', dx)
+        f.put('n1', nz)
+        f.put('n2', nx)
+        f.write(layers_full)
 
     d_forward['vp'] = create_vp
     d_forward['vs'] = create_vs

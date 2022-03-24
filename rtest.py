@@ -12,7 +12,6 @@ SeqFlowLcl = SeqFlow
 SeqPlotLcl = SeqPlot
 
 global d_forward
-global d_veltran
 global mode
 global do_radon
 
