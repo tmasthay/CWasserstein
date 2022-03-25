@@ -1,4 +1,5 @@
-from rtest import *
+from seqflow import *
+from newtest import *
 import numpy as np
 from itertools import product
 import matplotlib.pyplot as plt
@@ -8,13 +9,14 @@ from subprocess import check_output as co
 from mode_to_str import *
 import signal
 
+Flow=SeqFlowV
+Plot=SeqPlot
+
 global TOP_DIR
 
 #Usage
 # python SConstruct modes=[] grid=[nz,nx] threshold=0
 #ignore me...ssh git test
-
-Flow=SeqFlowV
 
 landscape = True
 inversion = False
@@ -85,21 +87,32 @@ def sfl2(src):
 
 def square_normalize(dest, src, alpha=0.0):
     C = 1.0 / sfl2(src)
-    Flow(dest, src, 'math output=(%.4f*input*input + %.4f)'%(C,alpha))
+    Flow(dest, src, 'math output="%.4f*input*input + %.4f"'%(C,alpha))
 
-def hs(f1, f2, alpha=0.0, s=-1.0):
+def hs(f1, f2, n1, n2, alpha=0.0, pad=1, s=-1.0):
     g1 = f1 + '_norm'
     g2 = f2 + '_norm'
     square_normalize(g1, f1, alpha)
     square_normalize(g2, f2, alpha)
 
     h1 = f1 + '_fft'
-    h2 = f2 + '_fft' 
-    Flow(h1, g1, 'fft2
-
+    h2 = f2 + '_fft'
+    Flow(h1, g1, 
+        '''
+        fft2 pad1=%d | dd type=float | put n1=%d n2=%d
+        '''%(pad,n1+pad,n2))
+    Flow(h2, g2, 
+        '''
+        fft2 pad1=%d dd type=float | put n1=%d n2=%d
+        '''%(pad,n1+pad,n2))
     
-    
-     
+    Flow('tmp_integrand', '%s %s'%(h1,h2),
+       '''
+       math output="(input - y)  / (1 + x1*x1 + x2*x2)^(%.8f)"
+           y=${SOURCES[1]}
+       ''')
+    return sfl2('tmp_integrand')
+ 
 def run_mode(mode):
     if( landscape ):
         global TOP_DIR
@@ -120,9 +133,16 @@ def run_mode(mode):
         
         pts = np.array([yy for yy in product(z,x)])
         
-        set_mode(mode)
-
-        misfits = run_test(pts)
+        misfits = np.zeros(len(pts))
+        alpha = 0.0
+        for (i,pt) in enumerate(pts):
+            z = pt[0]
+            x = pt[1]
+            ztop, xtop = create_case(z,x)
+            suff = d_forward['case'] + '_top'
+            misfits[i] = hs(ztop, 'wavz_' + suff, alpha=alpha)
+            misfits[i] += hs(xtop, 'wavx_' + suff, alpha=alpha)
+             
         threshold = parse('threshold')
         if( type(threshold) != type(None) ):
             for i in range(len(misfits)):
@@ -136,7 +156,7 @@ def run_mode(mode):
         print('misfits:\n%s'%misfits)
 
         plt_title = mode_to_str(mode)
-        dir = setup_output_directory(plt_title)
+        my_dir = setup_output_directory(plt_title)
         fig,ax = plt.subplots()
         img = plt.imshow(misfits, \
             extent=[np.min(Z), np.max(Z), np.min(X), np.max(X)])
@@ -144,7 +164,7 @@ def run_mode(mode):
         plt.xlabel('Z')
         plt.ylabel('X')
         plt.title(plt_title)
-        case_dir = dir + '/' + '_'.join(plt_title.split(' '))
+        case_dir = my_dir + '/' + '_'.join(plt_title.split(' '))
         plt.savefig(case_dir + '.png')
         np.save(case_dir + 'Z.npy', Z)
         np.save(case_dir + 'X.npy', X)
