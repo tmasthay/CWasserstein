@@ -419,7 +419,7 @@ float wass2tracesurfsp(float*** f, float*** g, float* t, int nx, int nt, int np)
 
 float l2surf(float*** f, float*** g, int nx, int nt){
     float sum=0.0;
-    
+    int nb=35;
     int ix,it;
     for(ix = 0; ix < nx; ix++){
         for(it = 0; it < nt; it++){
@@ -499,8 +499,8 @@ int main(int argc, char* argv[]){
     // ////fprintf(stderr, "(nt,nt_check,nt_true) = (%d,%d,%d)\n", nt, nt_check, nt_true);
 
     //Input validation
-    if( nz_check != nz ) sf_error("Dimension mismatch: z");
-    if( nx_check != nx ) sf_error("Dimension mismatch: x");
+    if( nz_check != nz ) sf_error("Dimension mismatch: z, (%d,%d)\n", nz_check, nz);
+    if( nx_check != nx ) sf_error("Dimension mismatch: x, (%d,%d)\n", nz_check, nz);
     if( nt_check != nt ) sf_error("Dimension mismatch: t1 yo");
     if( nt != nt_true ) sf_error("Dimension mismatch: t2 yo, nt=%d, ntrue=%d", nt, nt_true);
 

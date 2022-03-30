@@ -3,7 +3,11 @@ from seqflow import *
 
 SeqFlowLcl = SeqFlowV
 
+global recycle
+recycle = True
 def  forward(d):
+    global recycle
+
     #case name tag
     case_name = d['case']
 
@@ -49,6 +53,9 @@ def  forward(d):
     #amplitude
     amp = d['amp']
 
+    #noise level
+    noise = d['noise']
+
     def create_field(fexpr, field_name, input_file=None):
         if( input_file != None ):
             input_file = input_file.replace('.rsf', '') + '.rsf'
@@ -59,19 +66,24 @@ def  forward(d):
             if( len(s) == 1 ):
                 output_file = get_field(field_name).replace('.rsf','')
                 output_file += '.rsf'
+                if( os.path.exists(output_file) ):
+                    return False
                 SeqFlowLcl(output_file,
                     input_file,
                     '''
                     math output="%s" n1=%s n2=%s d1=%.15f d2=%.15f
                     label1=x1 unit1=km label2=x2 unit2=km
                     '''%(fexpr, n1, n2, d1, d2))
+                return True
             else:
                  filename = s[0]
                  cmd = s[1]
                  if( not os.path.exists(s[0]) ):
                      exec(cmd)
+                 return True
         else:
             fexpr(get_field(field_name, True))
+            return True
              
     def forward_command(nbt, fmt, dtt, ssxft, sszft, esxft, eszft, nxft, nzft,kt):
         s = 'nb=%d fm=%d dt=%.15f nt=%s kt=%s ssxf=%s sszf=%s'%(nbt,fmt,dtt,kt,kt,ssxft,sszft)
@@ -97,7 +109,13 @@ def  forward(d):
          create_field(rho, 'rho')
          SeqFlowLcl(combine(['wavz','wavx']), combine(['vp', 'vs', 'rho']) 
              + ' ' + elas, fc)
+         return True
     else:
+         output_files = combine(['wavz', 'wavx'])
+         if( os.path.exists(output_files[0].replace('.rsf', '_top.rsf')) \
+                 and recycle ):
+             return False
          SeqFlowLcl(combine(['wavz', 'wavx']),
              '_synthetic '.join(['vp','vs','rho',''])[:-1] + ' ' + elas,
-             fc) 
+             fc + ' | noise var=%.8f'%noise) 
+         return True

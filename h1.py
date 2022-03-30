@@ -8,11 +8,15 @@ import sys
 from subprocess import check_output as co
 from mode_to_str import *
 import signal
+from purge import purge
 
 Flow=SeqFlowV
 Plot=SeqPlot
 
 global TOP_DIR
+global l2_mode
+
+l2_mode = True
 
 #Usage
 # python SConstruct modes=[] grid=[nz,nx] threshold=0
@@ -80,16 +84,22 @@ def handler(signum, frame):
     exit(1)
 
 def sfl2(src):
-    return float(co('sfattr < %s.rsf'%src, shell=True) \
+    s = co('sfattr < %s.rsf'%src, shell=True) \
         .decode('utf-8') \
         .split('\n')[3] \
-        .split('=')[-1])
+        .split('=')[-1]
+    try:
+        return float(s)
+    except: 
+        print('Error at %s.rsf'%src)
+        exit(-1)
+        
 
 def square_normalize(dest, src, alpha=0.0):
     C = 1.0 / sfl2(src)
-    Flow(dest, src, 'math output="%.4f*input*input + %.4f"'%(C,alpha))
+    Flow(dest, src, 'math output="%.16f*input*input + %.4f"'%(C,alpha))
 
-def hs(f1, f2, n1, n2, alpha=0.0, pad=1, s=-1.0):
+def hs(f1, f2, n1, n2, del_char='z', alpha=0.0, pad=1, s=-1.0):
     g1 = f1 + '_norm'
     g2 = f2 + '_norm'
     square_normalize(g1, f1, alpha)
@@ -99,23 +109,47 @@ def hs(f1, f2, n1, n2, alpha=0.0, pad=1, s=-1.0):
     h2 = f2 + '_fft'
     Flow(h1, g1, 
         '''
-        fft2 pad1=%d | dd type=float | put n1=%d n2=%d
-        '''%(pad,n1+pad,n2))
+        dd type=complex | fft3 axis=1 | fft3
+        ''')
     Flow(h2, g2, 
         '''
-        fft2 pad1=%d dd type=float | put n1=%d n2=%d
-        '''%(pad,n1+pad,n2))
+        dd type=complex | fft3 axis=1 | fft3
+        ''')
     
-    Flow('tmp_integrand', '%s %s'%(h1,h2),
+    Flow('tmp', '%s %s'%(h1,h2),
        '''
-       math output="(input - y)  / (1 + x1*x1 + x2*x2)^(%.8f)"
-           y=${SOURCES[1]}
+       math output="abs(input - y)"
+           y=${SOURCES[1]} | dd type=float
        ''')
-    return sfl2('tmp_integrand')
+    if( not os.path.exists('kernel.rsf') ):
+        Flow('kernel', 'tmp',
+            '''
+            math output="1.0 / (1.0 + x1^2 + x2^2)"
+            ''')
+    Flow('tmp_integrand', 'tmp kernel',
+        '''
+        math output="input * y" y=${SOURCES[1]}
+        ''')
+    final_result = sfl2('tmp_integrand')
+    #os.system('sfrm wav%s_[0-9].*rsf'%del_char)
+    #purge()
+    return final_result
+
+def l2diff(f1, f2, del_char='z'):
+    Flow('diff', '%s %s'%(f1,f2),
+        '''
+        math output="input - y" y=${SOURCES[1]}
+        ''')
+    return_val = sfl2('diff')
+    #os.system('sfrm wav%s_[0-9].*[0-9].rsf'%del_char)
+    #purge()
+    return return_val
+    
  
 def run_mode(mode):
     if( landscape ):
         global TOP_DIR
+        global l2_mode
         signal.signal(signal.SIGINT, handler)
         t = time()
 
@@ -136,17 +170,28 @@ def run_mode(mode):
         misfits = np.zeros(len(pts))
         alpha = 0.0
         for (i,pt) in enumerate(pts):
-            z = pt[0]
-            x = pt[1]
-            ztop, xtop = create_case(z,x)
+            zz = pt[0]
+            xx = pt[1]
+            ztop, xtop = create_case(zz,xx)
             suff = d_forward['case'] + '_top'
-            misfits[i] = hs(ztop, 'wavz_' + suff, alpha=alpha)
-            misfits[i] += hs(xtop, 'wavx_' + suff, alpha=alpha)
+            if( l2_mode ):
+                misfits[i] = l2diff(ztop, 'wavz_' + suff, 'z')
+                misfits[i] += l2diff(ztop, 'wavx_' + suff, 'x')
+            else:
+                misfits[i] = hs(ztop, 'wavz_' + suff, nz, nx, 'z', 
+                    alpha=alpha)
+                misfits[i] += hs(xtop, 'wavx_' + suff, nz, nx, 'x', 
+                    alpha=alpha)
              
-        threshold = parse('threshold')
-        if( type(threshold) != type(None) ):
+        min_threshold = parse('min_threshold')
+        max_threshold = parse('max_threshold')
+        if( type(min_threshold) != type(None) ):
             for i in range(len(misfits)):
-                misfits[i] = min(threshold, misfits[i])
+                misfits[i] = min(min_threshold, misfits[i])
+
+        if( type(max_threshold) != type(None) ):
+            for i in range(len(misfits)):
+                misfits[i] = min(max_threshold, misfits[i])
 
         Z,X = np.meshgrid(z,x)
         misfits = misfits.reshape(Z.shape)
@@ -156,6 +201,10 @@ def run_mode(mode):
         print('misfits:\n%s'%misfits)
 
         plt_title = mode_to_str(mode)
+        if( l2_mode ):
+            plt_title = "L2_surf_Fomel"
+        else:
+            plt_title = "Hminus1"
         my_dir = setup_output_directory(plt_title)
         fig,ax = plt.subplots()
         img = plt.imshow(misfits, \
@@ -192,4 +241,7 @@ def go():
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGALRM, handler)
 
-go()
+will_run=False
+
+if(will_run):
+    go()

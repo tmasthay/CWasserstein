@@ -18,6 +18,9 @@ def create_base():
     
     nt = 1000
     dt = 5e-03 
+
+    amp = 1000.0
+    snr = 2.0
     
     d_forward = {
             'case' : 'synthetic',
@@ -35,14 +38,15 @@ def create_base():
             'nsx' :  1,
             'nb' : 35,
             'fm' : 5.0,
-            'amp': 1000.0,
+            'amp': amp,
+            'noise': amp / snr,
             'vp_expr': '0.5 + 10*sin(x1+x2)',
             'vs_expr': '0.707 * input',
             'rho_expr': '1.0'
     }
 
     def create_vp(the_name):
-        layer_vals = [0.5, 0.5, 0.5]
+        layer_vals = [0.25, 0.5, 0.75]
         layer_ends = [0.25, 0.75]
         
         x = np.linspace(0,1,nx)
@@ -59,7 +63,7 @@ def create_base():
         f.write(layers_full)
 
     def create_vs(the_name):
-        layer_vals = [0.5, 0.5, 0.5]
+        layer_vals = [0.25, 0.5, 0.75]
         layer_ends = [0.25, 0.75]
         
         x = np.linspace(0,1,nx)
