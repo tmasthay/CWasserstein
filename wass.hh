@@ -32,6 +32,7 @@ public:
         //set counter vars
         this->nt = t.size();
         this->num_rec = num_rec;
+        this->np = p.size();
 
         //sanity check
         assert(data.size() == num_rec * nt);
@@ -108,6 +109,8 @@ public:
 
        //num_splits = k <--> renormalization routine outputs k prob. densities
        int num_splits = m_ren.size();
+       cerr << "numsplits = " << num_splits << endl;
+       cerr << "num_rec = " << num_rec << endl;
 
        //total_sum for return value
        T total_sum = 0.0;
@@ -121,13 +124,15 @@ public:
                Ctn<T> f_q(quantile(cdf(Ctn<T>(start,end))));
                Ctn<T> d_q(quantile(cdf(Ctn<T>(start,end))));
  
+               assert( f_q.size() == np );
+               assert( d_q.size() == np );
+  
                //sum up squared difference of quantiles
-               for(int i_t = 0; i_t < nt - 1; i_t++){
-                   T dt = t.at(i_t+1) - t.at(i_t);
-                   T dqr = f_q.at(i_t+1) - d_q.at(i_t+1);
-                   T dql = f_q.at(i_t) - d_q.at(i_t);
-                   total_sum += 0.5 * dt * (dqr*dqr + dql*dql);
-                   cerr << total_sum << endl;
+               for(int i_p = 0; i_p < np - 1; i_p++){
+                   T dp = p.at(i_p+1) - p.at(i_p);
+                   T dqr = f_q.at(i_p+1) - d_q.at(i_p+1);
+                   T dql = f_q.at(i_p) - d_q.at(i_p);
+                   total_sum += 0.5 * dp * (dqr*dqr + dql*dql);
                }
            }
        }
