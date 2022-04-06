@@ -21,15 +21,15 @@ private:
     int nt;
     int np;
     T eps=1e-10;
+    bool init_ren=false;
 public:
-    Wass(Ctn<T> data, Ctn<T> t, Ctn<T> p, int num_rec, int nt){
+    Wass(Ctn<T> data, Ctn<T> t, Ctn<T> p, int num_rec){
         this->data = data;
         assert(data.size() == num_rec * nt);
         this->t.assign(t.begin(), t.end());
         this->p.assign(p.begin(), p.end());
         this->num_rec = num_rec;
-        this->nt = nt;
-        this->data_ren.swap(this->renormalize(this->data));
+        this->nt = t.size();
     }
     Ctn<T> cdf(Ctn<T> f){
         //precondition error checking
@@ -82,6 +82,10 @@ public:
     T eval(Ctn<T> m){
        T eps_for_now = 1e-10;
        Ctn<Ctn<T>> m_ren(renormalize(m));
+       if( not init_ren ){
+           data_ren = renormalize(data);
+           init_ren = true;
+       }
        assert(m_ren.size() == data_ren.size());
        assert(m_ren.at(0).size() == num_rec * nt);
        int num_splits = m_ren.size();

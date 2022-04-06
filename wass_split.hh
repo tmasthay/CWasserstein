@@ -11,6 +11,8 @@ template<class T> using Ctn=vector<T>;
 template<class T>
 class WassSplit : public Wass<T>{
 public:
+    using Wass<T>::Wass;
+
     Ctn<Ctn<T>> renormalize(Ctn<T> f){
         Ctn<Ctn<T>> g(2,f);
         int N = f.size();
