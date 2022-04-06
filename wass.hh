@@ -24,40 +24,52 @@ private:
     bool init_ren=false;
 public:
     Wass(Ctn<T> data, Ctn<T> t, Ctn<T> p, int num_rec){
+        //set container class vars
         this->data = data;
-        assert(data.size() == num_rec * nt);
         this->t.assign(t.begin(), t.end());
         this->p.assign(p.begin(), p.end());
-        this->num_rec = num_rec;
+
+        //set counter vars
         this->nt = t.size();
+        this->num_rec = num_rec;
+
+        //sanity check
+        assert(data.size() == num_rec * nt);
     }
     Ctn<T> cdf(Ctn<T> f){
         //precondition error checking
         assert( f.size() == t.size() );
 
+        //set size parameter for small speedup
         int N = f.size();
+
+        //initialize cdf
         Ctn<T> F(N,0);
+
+        //integrate f to recover F
         for(int i = 0; i < N - 1; i++){
             T avgf = 0.5 * (f[i+1] + f[i]);
             T dt = t[i+1] - t[i];
             assert( dt > 0 );
             F[i+1] = F[i] + avgf * dt;
         }
+ 
+        //normalize so it's a valid cdf
         for(int i = 0; i < N; i++){
             F[i] /= F[N-1];
         }
         return F;
     }
     
+    //quantile function 
     Ctn<T> quantile(Ctn<T> F){
          //precondition error checking
-        // assert( F.size() == x.size() )
-         //looping vars
-         int i_t = 0;
+         assert( F.size() == nt );
     
          //initialize Quantile
          Ctn<T> Q(np, 0);
     
+         //loop over all probability values p.at(i_p)
          for(int i_p = 0; i_p < np; i_p++){
              for(int i_t = 0; i_t < nt - 1; i_t++){
                  if( F.at(i_t) <= p.at(i_p) and p.at(i_p) <= F.at(i_t+1) ){
@@ -79,28 +91,43 @@ public:
     
     virtual Ctn<Ctn<T>> renormalize(Ctn<T> f) = 0; // pure virtual
     
+    //implement virtual evaluation function -- workhorse function
     T eval(Ctn<T> m){
-       T eps_for_now = 1e-10;
+       //renormalize synthetic data
        Ctn<Ctn<T>> m_ren(renormalize(m));
+
+       //renormalize data if needed
        if( not init_ren ){
            data_ren = renormalize(data);
            init_ren = true;
        }
+
+       //sanity check dimensions
        assert(m_ren.size() == data_ren.size());
        assert(m_ren.at(0).size() == num_rec * nt);
+
+       //num_splits = k <--> renormalization routine outputs k prob. densities
        int num_splits = m_ren.size();
+
+       //total_sum for return value
        T total_sum = 0.0;
        for(int i_s = 0; i_s < num_splits; i_s++){
            for(int i_r = 0; i_r < num_rec; i_r++){
+               //get proper index slices
                typename Ctn<T>::iterator start = m_ren.at(i_s).begin() + i_r * nt;
                typename Ctn<T>::iterator end = start + nt;
+
+               //recover quantile functions
                Ctn<T> f_q(quantile(cdf(Ctn<T>(start,end))));
                Ctn<T> d_q(quantile(cdf(Ctn<T>(start,end))));
+ 
+               //sum up squared difference of quantiles
                for(int i_t = 0; i_t < nt - 1; i_t++){
                    T dt = t.at(i_t+1) - t.at(i_t);
                    T dqr = f_q.at(i_t+1) - d_q.at(i_t+1);
                    T dql = f_q.at(i_t) - d_q.at(i_t);
                    total_sum += 0.5 * dt * (dqr*dqr + dql*dql);
+                   cerr << total_sum << endl;
                }
            }
        }
