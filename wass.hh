@@ -72,20 +72,25 @@ public:
          //initialize Quantile
          Ctn<T> Q(np, 0);
     
+         //initialize loop variable
+         int i_t = 0;
          //loop over all probability values p.at(i_p)
          for(int i_p = 0; i_p < np; i_p++){
-             for(int i_t = 0; i_t < nt - 1; i_t++){
+             while(i_t < nt - 1){
                  if( F.at(i_t) <= p.at(i_p) and p.at(i_p) <= F.at(i_t+1) ){
                      T df = F[i_t+1] - F[i_t];
                      if( df < eps ){
                          //left bin -- division might cause problems
-                         Q.at(i_p) = F.at(i_t);
+                         Q.at(i_p) = t.at(i_t);
                      }
                      else{ //else interpolate between left and right
                          T alpha = (p.at(i_p) - F.at(i_t)) / df;
-                         Q.at(i_p) = (1-alpha) * F.at(i_t) + alpha * F.at(i_t+1);
+                         Q.at(i_p) = (1-alpha) * t.at(i_t) 
+                             + alpha * t.at(i_t+1);
                      }
+                     break;
                  }
+                 i_t++;
              }
          }
          return Q;
