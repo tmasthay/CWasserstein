@@ -15,6 +15,7 @@ class Wass : public Misfit<T>{
 private:
     Ctn<T> data;
     Ctn<Ctn<T>> data_ren;
+    Ctn<T> quantile_var;
     Ctn<T> t;
     Ctn<T> p;
     int num_rec;
@@ -22,6 +23,7 @@ private:
     int np;
     T eps=1e-10;
     bool init_ren=false;
+    bool init_quantile=false;
 public:
     Wass(Ctn<T> data, Ctn<T> t, Ctn<T> p, int num_rec){
         //set container class vars
@@ -109,23 +111,37 @@ public:
 
        //num_splits = k <--> renormalization routine outputs k prob. densities
        int num_splits = m_ren.size();
-       cerr << "numsplits = " << num_splits << endl;
-       cerr << "num_rec = " << num_rec << endl;
 
        //total_sum for return value
        T total_sum = 0.0;
+
+       if( not init_quantile ){
+           init_quantile=true;
+           //come back and implement so that it's not redundant
+       }
+
        for(int i_s = 0; i_s < num_splits; i_s++){
            for(int i_r = 0; i_r < num_rec; i_r++){
-               //get proper index slices
-               typename Ctn<T>::iterator start = m_ren.at(i_s).begin() + i_r * nt;
-               typename Ctn<T>::iterator end = start + nt;
-
-               //recover quantile functions
-               Ctn<T> f_q(quantile(cdf(Ctn<T>(start,end))));
-               Ctn<T> d_q(quantile(cdf(Ctn<T>(start,end))));
+               //get model index slices
+               typename Ctn<T>::iterator start_m = m_ren.at(i_s).begin() + i_r * nt;
+               typename Ctn<T>::iterator end_m = start_m + nt;
+               Ctn<T> f_q(quantile(cdf(Ctn<T>(start_m,end_m))));
+               
+               //get data index slices
+               auto start_d = data_ren.at(i_s).begin() + i_r * nt;
+               auto end_d = start_d + nt;
+               Ctn<T> d_q(quantile(cdf(Ctn<T>(start_d, end_d))));
+                
+               //Ctn<T> d_q(quantile(cdf(Ctn<T>(start,end))));
+                
+               for(int i_p = 0; i_p < np; i_p++){
+//                   cout << "(" << f_q.at(i_p) < "," << d_q.at(i_p) << ")" << endl;
+                   cout << "(" << p.at(i_p) << "," << f_q.at(i_p) << ", " << 
+                       d_q.at(i_p) << ")" << endl;
+               }
  
-               assert( f_q.size() == np );
-               assert( d_q.size() == np );
+               //assert( f_q.size() == np );
+               //assert( d_q.size() == np );
   
                //sum up squared difference of quantiles
                for(int i_p = 0; i_p < np - 1; i_p++){
