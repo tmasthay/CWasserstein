@@ -1,8 +1,5 @@
 import numpy as np
 import m8r
-from seqflow import *
-
-Flow=SeqFlowV
 
 def layered_medium(layer_vals, layer_ends, x):
     return np.array([layer_vals[i] for i in np.digitize(x, layer_ends)])
@@ -45,6 +42,7 @@ def create_base():
             'rho_expr': '1.0'
     }
 
+    @run_once
     def create_vp(the_name):
         layer_vals = [0.25, 0.5, 0.75]
         layer_ends = [0.25, 0.75]
@@ -62,6 +60,7 @@ def create_base():
 
         f.write(layers_full)
 
+    @run_once
     def create_vs(the_name):
         layer_vals = [0.25, 0.5, 0.75]
         layer_ends = [0.25, 0.75]
@@ -78,6 +77,7 @@ def create_base():
         f.put('n2', nx)
         f.write(layers_full)
 
+    @run_once
     def create_rho(the_name):
         Flow(the_name, None, 
             'math output=%s d1=%.f n1=%d d2=%.4f n2=%d'%(
@@ -85,12 +85,12 @@ def create_base():
                 d_forward['dz'], d_forward['nz'], 
                 d_forward['dx'], d_forward['nx']))
 
-    d_forward['vp'] = create_vp
-    d_forward['vs'] = create_vs
-    d_forward['rho'] = create_rho
+    d_forward['vp'] = 'vp'
+    d_forward['vs'] = 'vs'
+    d_forward['rho'] = 'rho'
 
-    d_forward['vp_name'] = 'vp'
-    d_forward['vs_name'] = 'vs'
-    d_forward['rho_name'] = 'rho'
-    
+    create_vp(d_forward['vp'])
+    create_vs(d_forward['vs'])
+    create_rho(d_forward['rho'])
+
     return d_forward
