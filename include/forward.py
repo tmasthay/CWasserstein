@@ -63,5 +63,5 @@ def  forward(d):
     fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3)
 
     Flow('%s %s'%(get_field('wavz'), get_field('wavx')), \
-         '%s %s %s'%(vp, vs rho),
+         '%s %s %s'%(vp, vs, rho), \
          fc)

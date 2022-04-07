@@ -137,84 +137,84 @@ void CUB::seek(off_t offset, int whence) const
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator>> (Ctn<complex<float> > &array) const
+CUB::operator>> (vector<complex<float> > &array) const
 {
     sf_complexread((reinterpret_cast<sf_complex*>(&array[0])), array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator<< (Ctn<complex<float> > &array) const
+CUB::operator<< (vector<complex<float> > &array) const
 {
     sf_complexwrite((reinterpret_cast<sf_complex*>(&array[0])),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator>> (Ctn<sf_complex> &array) const
+CUB::operator>> (vector<sf_complex> &array) const
 {
     sf_complexread(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator<< (Ctn<sf_complex> &array) const
+CUB::operator<< (vector<sf_complex> &array) const
 {
     sf_complexwrite(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator>> (Ctn<float> &array) const
+CUB::operator>> (vector<float> &array) const
 {
     sf_floatread(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator<< (Ctn<float> &array) const
+CUB::operator<< (vector<float> &array) const
 {
     sf_floatwrite(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator>> (Ctn<int> &array) const
+CUB::operator>> (vector<int> &array) const
 {
     sf_intread(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator<< (Ctn<int> &array) const
+CUB::operator<< (vector<int> &array) const
 {
     sf_intwrite(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator>> (Ctn<short> &array) const
+CUB::operator>> (vector<short> &array) const
 {
     sf_shortread(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator<< (Ctn<short> &array) const
+CUB::operator<< (vector<short> &array) const
 {
     sf_shortwrite(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator>> (Ctn<char> &array) const
+CUB::operator>> (vector<char> &array) const
 {
     sf_charread(&(array[0]),array.size(),file_);
     return *this;
 }
 //------------------------------------------------------------
 const CUB&
-CUB::operator<< (Ctn<char> &array) const
+CUB::operator<< (vector<char> &array) const
 {
     sf_charwrite(&(array[0]),array.size(),file_);
     return *this;

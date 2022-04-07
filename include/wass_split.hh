@@ -24,8 +24,8 @@ public:
         
         //split between positive and negative parts
         for(int i = 0; i < N; i++){
-            if( g.at(0).at(i) < 0 ) g.at(0).at(i) = 0.0;
-            if( g.at(1).at(i) > 0 ) g.at(0).at(i) = 0.0;
+            if( g[0][i] < 0 ) g[0][i] = 0.0;
+            if( g[1][i] > 0 ) g[1][i] = 0.0;
         }
         return g;
     }

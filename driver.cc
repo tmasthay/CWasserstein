@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cassert>
 
-using T=double;
+using T=float;
 
 int main(int argc, char* argv[]){
     sf_init(argc, argv);
@@ -42,17 +42,19 @@ int main(int argc, char* argv[]){
     assert( nt == nt_true ); assert( abs(dt - dt_true) < eps );
 
     //read in data
-    Ctn<T> f_vec(nz * nx * nt, 0); f >> f_vec;
-    Ctn<T> g_vec(nz * nx * nt, 0); g >> g_vec;
-    Ctn<T> t_vec(nt, 0); t >> t_vec;
-    Ctn<T> p_vec(np, 0); p >> p_vec;
+    valarray<float> f_vec_tmp(nz * nx * nt, 0); auto f_vec = f_vec_tmp; f >> f_vec;
+    valarray<float> g_vec_tmp(nz * nx * nt, 0); auto g_vec = g_vec_tmp; g >> g_vec;
+    valarray<float> t_vec_tmp(nt, 0); auto t_vec = t_vec_tmp; t >> t_vec;
+    valarray<float> p_vec_tmp(np, 0); auto p_vec = p_vec_tmp; p >> p_vec;
    
     WassSplit<T> my_misfit(g_vec, t_vec, p_vec, nx);
-    T value = eval(f_vec);
+    T value = my_misfit.eval(f_vec);
 
-    sf_axis output_axis = maxa(1, (float) value, 0.0);
+    sf_axis output_axis = sf_maxa(1, (float) value, 0.0);
     output_file.putax(0, output_axis);
-    output_file << Ctn<T>(1,value);
+
+    cout << value << endl;
+//    output_file << tmp;
 
     return 0;
 }

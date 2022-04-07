@@ -1,11 +1,11 @@
 #ifndef CUB_H
 #define CUB_H
 
-#include <valarray>
+#include "misfit.hh"
 #include <iostream>
 #include <complex>
 #include <rsf.hh>
-#include "misfit.hh"
+#include <valarray>
 
 using namespace std;
 
@@ -43,23 +43,23 @@ public:
     // SEEK_END=2
     void  seek(off_t offset, int whence) const;	
 
-    const CUB& operator>> (Ctn <complex<float> > &vect) const;
-    const CUB& operator<< (Ctn <complex<float> > &vect) const;
+    const CUB& operator>> (vector <complex<float> > &vect) const;
+    const CUB& operator<< (vector <complex<float> > &vect) const;
 
-    const CUB& operator>> (Ctn <sf_complex> &vect) const;
-    const CUB& operator<< (Ctn <sf_complex> &vect) const;
+    const CUB& operator>> (vector <sf_complex> &vect) const;
+    const CUB& operator<< (vector <sf_complex> &vect) const;
 
-    const CUB& operator>> (Ctn <float> &vect) const;
-    const CUB& operator<< (Ctn <float> &vect) const;
+    const CUB& operator>> (vector <float> &vect) const;
+    const CUB& operator<< (vector <float> &vect) const;
 
-    const CUB& operator>> (Ctn <int> &vect) const;
-    const CUB& operator<< (Ctn <int> &vect) const;
+    const CUB& operator>> (vector <int> &vect) const;
+    const CUB& operator<< (vector <int> &vect) const;
 
-    const CUB& operator>> (Ctn <short> &vect) const;
-    const CUB& operator<< (Ctn <short> &vect) const;
+    const CUB& operator>> (vector <short> &vect) const;
+    const CUB& operator<< (vector <short> &vect) const;
 
-    const CUB& operator>> (Ctn <char> &vect) const;
-    const CUB& operator<< (Ctn <char> &vect) const;
+    const CUB& operator>> (vector <char> &vect) const;
+    const CUB& operator<< (vector <char> &vect) const;
 
     void  read(complex<float> &in,int num_values);
     void  write(complex<float> &in,int num_values);

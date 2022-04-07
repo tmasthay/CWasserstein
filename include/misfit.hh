@@ -1,13 +1,13 @@
 #ifndef MISFIT_H
 #define MISFIT_H
 
-#include <valarray>
+#include<valarray>
 #include <vector>
 
 using namespace std;
 
 //throw this in a namespace;
-template<class T> using Ctn=vector<T>;
+template<class T> using Ctn=valarray<T>;
 
 template< class T >
 class Misfit {

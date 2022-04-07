@@ -4,6 +4,57 @@ import m8r
 def layered_medium(layer_vals, layer_ends, x):
     return np.array([layer_vals[i] for i in np.digitize(x, layer_ends)])
 
+def run_once(f):
+    def wrapper(s):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            return f(s)
+    wrapper.has_run = False
+    return wrapper
+
+@run_once
+def create_vp(the_name):
+    layer_vals = [0.25, 0.5, 0.75]
+    layer_ends = [0.25, 0.75]
+    
+    x = np.linspace(0,1,nx)
+
+    layers = layered_medium(layer_vals, layer_ends, x)
+    layers_full = np.array([layers for i in range(nz)])
+    f = m8r.Output(the_name + '.rsf')
+
+    f.put('d1', dz)
+    f.put('d2', dx)
+    f.put('n1', nz)
+    f.put('n2', nx)
+
+    f.write(layers_full)
+
+@run_once
+def create_vs(the_name):
+    layer_vals = [0.25, 0.5, 0.75]
+    layer_ends = [0.25, 0.75]
+    
+    x = np.linspace(0,1,nx)
+
+    s_factor = 0.707
+    layers = s_factor * layered_medium(layer_vals, layer_ends, x)
+    layers_full = np.array([layers for i in range(nz)])
+    f = m8r.Output(the_name + '.rsf')
+    f.put('d1', dz)
+    f.put('d2', dx)
+    f.put('n1', nz)
+    f.put('n2', nx)
+    f.write(layers_full)
+
+@run_once
+def create_rho(the_name):
+    Flow(the_name, None, 
+        'math output=%s d1=%.f n1=%d d2=%.4f n2=%d'%(
+            d_forward['rho_expr'],
+            d_forward['dz'], d_forward['nz'], 
+            d_forward['dx'], d_forward['nx']))
+
 def create_base():
     N = 100
     
@@ -41,49 +92,6 @@ def create_base():
             'vs_expr': '0.707 * input',
             'rho_expr': '1.0'
     }
-
-    @run_once
-    def create_vp(the_name):
-        layer_vals = [0.25, 0.5, 0.75]
-        layer_ends = [0.25, 0.75]
-        
-        x = np.linspace(0,1,nx)
-
-        layers = layered_medium(layer_vals, layer_ends, x)
-        layers_full = np.array([layers for i in range(nz)])
-        f = m8r.Output(the_name + '.rsf')
-
-        f.put('d1', dz)
-        f.put('d2', dx)
-        f.put('n1', nz)
-        f.put('n2', nx)
-
-        f.write(layers_full)
-
-    @run_once
-    def create_vs(the_name):
-        layer_vals = [0.25, 0.5, 0.75]
-        layer_ends = [0.25, 0.75]
-        
-        x = np.linspace(0,1,nx)
-
-        s_factor = 0.707
-        layers = s_factor * layered_medium(layer_vals, layer_ends, x)
-        layers_full = np.array([layers for i in range(nz)])
-        f = m8r.Output(the_name + '.rsf')
-        f.put('d1', dz)
-        f.put('d2', dx)
-        f.put('n1', nz)
-        f.put('n2', nx)
-        f.write(layers_full)
-
-    @run_once
-    def create_rho(the_name):
-        Flow(the_name, None, 
-            'math output=%s d1=%.f n1=%d d2=%.4f n2=%d'%(
-                d_forward['rho_expr'],
-                d_forward['dz'], d_forward['nz'], 
-                d_forward['dx'], d_forward['nx']))
 
     d_forward['vp'] = 'vp'
     d_forward['vs'] = 'vs'
