@@ -43,23 +43,23 @@ public:
     // SEEK_END=2
     void  seek(off_t offset, int whence) const;	
 
-    const CUB& operator>> (vector <complex<float> > &vect) const;
-    const CUB& operator<< (vector <complex<float> > &vect) const;
+    const CUB& operator>> (valarray <complex<float> > &vect) const;
+    const CUB& operator<< (valarray <complex<float> > &vect) const;
 
-    const CUB& operator>> (vector <sf_complex> &vect) const;
-    const CUB& operator<< (vector <sf_complex> &vect) const;
+    const CUB& operator>> (valarray <sf_complex> &vect) const;
+    const CUB& operator<< (valarray <sf_complex> &vect) const;
 
-    const CUB& operator>> (vector <float> &vect) const;
-    const CUB& operator<< (vector <float> &vect) const;
+    const CUB& operator>> (valarray <float> &vect) const;
+    const CUB& operator<< (valarray <float> &vect) const;
 
-    const CUB& operator>> (vector <int> &vect) const;
-    const CUB& operator<< (vector <int> &vect) const;
+    const CUB& operator>> (valarray <int> &vect) const;
+    const CUB& operator<< (valarray <int> &vect) const;
 
-    const CUB& operator>> (vector <short> &vect) const;
-    const CUB& operator<< (vector <short> &vect) const;
+    const CUB& operator>> (valarray <short> &vect) const;
+    const CUB& operator<< (valarray <short> &vect) const;
 
-    const CUB& operator>> (vector <char> &vect) const;
-    const CUB& operator<< (vector <char> &vect) const;
+    const CUB& operator>> (valarray <char> &vect) const;
+    const CUB& operator<< (valarray <char> &vect) const;
 
     void  read(complex<float> &in,int num_values);
     void  write(complex<float> &in,int num_values);

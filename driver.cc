@@ -47,8 +47,8 @@ int main(int argc, char* argv[]){
     valarray<float> t_vec_tmp(nt, 0); auto t_vec = t_vec_tmp; t >> t_vec;
     valarray<float> p_vec_tmp(np, 0); auto p_vec = p_vec_tmp; p >> p_vec;
    
-    WassSplit<T> my_misfit(g_vec, t_vec, p_vec, nx);
-    T value = my_misfit.eval(f_vec);
+    WassSplit<float> my_misfit(g_vec, t_vec, p_vec, nx);
+    float value = my_misfit.eval(f_vec);
 
     sf_axis output_axis = sf_maxa(1, (float) value, 0.0);
     output_file.putax(0, output_axis);

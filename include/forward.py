@@ -1,4 +1,5 @@
 from rsf.proj import *
+from subprocess import check_output as co
 
 def  forward(d):
     #case name tag
@@ -56,12 +57,12 @@ def  forward(d):
         t = './${SOURCES[3]} vs=${SOURCES[1]} rho=${SOURCES[2]} wavx=${TARGETS[1]}'
         return t + ' ' + s
  
-    prog = Program('myelastic.c')
-    elas = str(prog[0])
-    elas = 'myelastic.exe'
+    path = 'include/'
+    src = path + 'myelastic.c'
+    elas_exe = src.replace('.c', '.exe')
 
     fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3)
 
     Flow('%s %s'%(get_field('wavz'), get_field('wavx')), \
-         '%s %s %s'%(vp, vs, rho), \
+         '%s %s %s %s'%(vp, vs, rho, elas_exe), \
          fc)

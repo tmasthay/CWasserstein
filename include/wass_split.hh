@@ -15,9 +15,9 @@ public:
     using Wass<T>::Wass;
 
     //implement virtual renormalization routine from superclass
-    Ctn<Ctn<T>> renormalize(Ctn<T> f){
+    valarray<valarray<T> > renormalize(valarray<T> f){
         //splitting maps to two pdfs
-        Ctn<Ctn<T>> g(2,f);
+        valarray<valarray<T> > g(f,2);
 
         //tmp var for efficiency
         int N = f.size();

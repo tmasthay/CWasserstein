@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
     dxs = (int) ( ((float) nx) * (esxf - ssxf) / (float) (nxf - 1) );
     szs = nb + (int) ( ((float) nz) * sszf );
     dzs = (int) ( ((float) nz) * (eszf - sszf) / (float) (nzf - 1) );
-    
+ 
     // fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
 
     /* allocate memory for variables */
@@ -299,7 +299,6 @@ int main(int argc, char* argv[])
                 if( sx > nb + nx - 1 ) { fprintf(stderr, ">x (ssxf, sx)=(%f,%d\n", ssxf, sx); sx = nx - 1; }
                 if( sz < nb ) { fprintf(stderr, "<z (sszf, sz)=(%f, %d)\n", sszf, sz); sz = 0; }
                 if( sz > nb + nz - 1 ) { fprintf(stderr, ">z (nb, nz, nz*sszf, sszf,  sz)=(%d, %d, %f, %f, %d)\n", nb, nz, nz * sszf, sszf,sz); sz = nz - 1; }
-                // fprintf(stderr, "(%d,%d,%d,%d)\n", isx, isz, sx, sz);
                 txx[sx][sz]+=wlt[it];
 	            tzz[sx][sz]+=wlt[it];
             }

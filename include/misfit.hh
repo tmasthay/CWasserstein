@@ -7,17 +7,17 @@
 using namespace std;
 
 //throw this in a namespace;
-template<class T> using Ctn=valarray<T>;
+//template<class T> using Ctn=valarray<T>;
 
 template< class T >
 class Misfit {
 public:
-        virtual T eval(Ctn<T> m) = 0; //purely virtual --> mandatory
-        virtual T grad(Ctn<T> m, 
-            Ctn<T> m_hat) {}; //optional
-        virtual T hessian(Ctn<T> m, 
-           Ctn<T> m_tilde, 
-           Ctn<T> m_hat) {}; //optional
+        virtual T eval(const valarray<T> &m) = 0; //purely virtual --> mandatory
+        virtual T grad(valarray<T> m, 
+            valarray<T> m_hat) {}; //optional
+        virtual T hessian(valarray<T> m, 
+           valarray<T> m_tilde, 
+           valarray<T> m_hat) {}; //optional
 };
 
 #endif
