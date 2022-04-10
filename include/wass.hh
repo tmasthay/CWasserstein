@@ -47,7 +47,7 @@ public:
         int N = f.size();
 
         //initialize cdf
-        valarray<T> F(N,0);
+        valarray<T> F(0.0,N);
 
         //integrate f to recover F
         for(int i = 0; i < N - 1; i++){
@@ -70,8 +70,8 @@ public:
          assert( F.size() == nt );
     
          //initialize Quantile
-         valarray<T> Q(np, 0);
-    
+         valarray<T> Q(0.0, np);
+  
          //initialize loop variable
          int i_t = 0;
          //loop over all probability values p[i_p])

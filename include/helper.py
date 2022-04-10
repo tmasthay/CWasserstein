@@ -61,12 +61,11 @@ def surface_obs(name,
     maxval=''):
     without_numbers = re.sub('[0-9][0-9]*', '', name)
     number = name[len(without_numbers):]
-    final_name = name + 'top' + number
+    final_name = without_numbers + 'top' + number
     Flow(final_name, name,
         '''
         window n1=1 f1=0 |
-        put label1=%s label2=%s unit1=%s unit2=%s |
-        transp plane=12
+        put label1=%s label2=%s unit1=%s unit2=%s
         ''')
     Result(final_name, final_name,
         grey('Surface obs for case %s'%number,
@@ -78,6 +77,7 @@ def surface_obs(name,
             unit2,
             minval,
             maxval))
+    return final_name
    
 def landscape(d_ref, d_perturb):
     s = ' '.join(list(d_perturb[0].keys()))

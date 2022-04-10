@@ -223,12 +223,17 @@ int main(int argc, char* argv[])
     if (!sf_getint("nzf", &nzf)) nzf = 2; /* number of sources in z direction */
     if (!sf_getfloat("amp", &amp)) amp=1.0;
 
+    //put appropriate dimension sizes
     sf_putint(Fwavz, "n1", nz);
     sf_putint(Fwavz, "n2", nx);
     sf_putint(Fwavz, "n3", nt);
     sf_putint(Fwavx, "n1", nz);
     sf_putint(Fwavx, "n2", nx);
     sf_putint(Fwavx, "n3", nt);
+
+    //add dt to wavz, wavx
+    sf_putfloat(Fwavz, "d3", dt);
+    sf_putfloat(Fwavx, "d3", dt);
 
     // fprintf(stderr, "(YOnz,nx,nt) = (%d,%d,%d)\n", nz, nx, nt);
     

@@ -1,5 +1,5 @@
-#ifndef WASS_H
-#define WASS_H
+#ifndef SOBOLEV_H
+#define SOBOLEV_H
 
 #include "misfit.hh"
 #include <iostream>
@@ -18,18 +18,35 @@ private:
     valarray<T> t;
  
     //s norm to take
-    float s;
+    T s;
+
+    //store X discretization
+    int nx;
+    T dx;
+    T ox;
+ 
+    //store T discretization
+    int nt;
+    T dt;
 public:
     //later on, make this an abstract class by adding a renormalization routine here
 
-    Wass(valarray<T> data, int nx, int nt, T dx, T dt, T ox){
+    Sobolev(const valarray<T> &data, T s, int nx, int nt, T dx, T dt, T ox){
         //set container class vars
         this->data = data;
         this->x = valarray<T>(0.0, nx);
         this->t = valarray<T>(0.0, nt);
+        this->s = s;
  
         for(int ix = 0; ix < nx; ix++) this->x[ix] = ox + ix * dx;
         for(int it = 0; it < nt; it++) this->t[it] = it * dt;
+
+        this->nx = nx;
+        this->dx = dx;
+        this->ox = ox;
+ 
+        this->nt = nt;
+        this->dt = dt;
 
         assert(this->data.size() == nx * nt);
         assert(this->x.size() == nx);
@@ -38,12 +55,13 @@ public:
 
     //implement slightly more general misfit for flexibility    
     T eval(const valarray<T> &m, T s_tilde){
+        assert( m.size() == nx * nt );
         T total_sum = 0.0;
         if( s_tilde == 0.0 ){
             for(int ix = 0; ix < nx; ix++){
                 for(int it = 0; it < nt; it++){
-                    T diff = m[it + ix*nx] - data[it + ix*nx];
-                    total_sum += diff*diff*dx*dt; 
+                    T diff = m[it + ix*nt] - data[it + ix*nt];
+                    total_sum += diff*diff*dx*dt;
                 }
             }
         }
