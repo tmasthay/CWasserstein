@@ -63,6 +63,11 @@ def  forward(d):
 
     fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3)
 
-    Flow('%s %s'%(get_field('wavz'), get_field('wavx')), \
-         '%s %s %s %s'%(vp, vs, rho, elas_exe), \
-         fc)
+
+#    Flow('%s %s'%(get_field('wavz'), get_field('wavx')), \
+#         '%s %s %s %s'%(vp, vs, rho, elas_exe), \
+#         fc)
+    output_files = '%s %s'%(get_field('wavz'), get_field('wavx'))
+    input_files = '%s %s %s %s'%(vp, vs, rho, elas_exe)
+    return output_files, input_files, fc
+    

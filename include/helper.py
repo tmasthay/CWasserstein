@@ -50,6 +50,35 @@ def snapshot_movie(base_name, ref_name, times,
                 minval,
                 maxval))
 
+def surface_obs(name,
+    color='seismic', 
+    scalebar='y', 
+    label1='Time', 
+    unit1='s', 
+    label2='X', 
+    unit2='km',
+    minval='',
+    maxval=''):
+    without_numbers = re.sub('[0-9][0-9]*', '', name)
+    number = name[len(without_numbers):]
+    final_name = name + 'top' + number
+    Flow(final_name, name,
+        '''
+        window n1=1 f1=0 |
+        put label1=%s label2=%s unit1=%s unit2=%s |
+        transp plane=12
+        ''')
+    Result(final_name, final_name,
+        grey('Surface obs for case %s'%number,
+            color,
+            scalebar,
+            label1,
+            unit1,
+            label2,
+            unit2,
+            minval,
+            maxval))
+   
 def landscape(d_ref, d_perturb):
     s = ' '.join(list(d_perturb[0].keys()))
     for (i,d) in enumerate(d_perturb):
@@ -74,4 +103,5 @@ def proto_landscape(d):
                 'ssxf': xx,
                 'esxf': xx,
                 'name': '%d'%i})
+
     return landscape(d_ref, d_perturb)
