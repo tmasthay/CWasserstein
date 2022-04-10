@@ -147,27 +147,15 @@ def create_base():
     nx = N
     bx = dx * nx
     
-    nt = 10000
+    nt = 40000
     dt = 0.0071
-    
-    '''
-    #test for scale recovery
-    az = 0.0
-    bz = 1.0
-    nz = N
-    dz = 1.0 / N
 
-    ax = 0.0
-    bx = 1.0
-    nx = N
-    dx = 1.0 / N
-
-    nt = 1000
-    dt = 0.001
-    '''
+    dt = 0.03
 
     amp = 1.0e3
     snr = 2.0
+    
+    #Check that noise is actually get added properly
     
     d_forward = {
             'case' : 'synthetic',
@@ -179,14 +167,14 @@ def create_base():
             'dx' : dx,
             'dt' :  dt,
             'nt' :  nt,
-            'sszf' :  0.25,
-            'ssxf' :  0.25,
-            'eszf' :  0.75,
-            'esxf' :  0.75,
-            'nsz' :  2,
-            'nsx' :  2,
-            'nb' : 35,
-            'fm' : 25.0,
+            'sszf' :  0.5,
+            'ssxf' :  0.5,
+            'eszf' :  0.5,
+            'esxf' :  0.5,
+            'nsz' :  1,
+            'nsx' :  1,
+            'nb' : 70,
+            'fm' : 1.0,
             'amp': amp,
             'noise': amp / snr,
             'vp_expr': '0.5 + 10*sin(x1+x2)',
