@@ -2,18 +2,23 @@ import numpy as np
 from itertools import product
 import copy
 from forward import forward
+from subprocess import check_output as co
 from rsf.proj import *
+import re
 
 def grey(title, 
     color='seismic', 
     scalebar='y', 
-    label1='Depth', 
-    unit1='km', 
+    label1='Time', 
+    unit1='s', 
     label2='RecLoc', 
     unit2='km',
     minval='',
     maxval=''):
-    s = 'grey color=%s scalebar=%s title=%s label1=%s unit1=%s label2=%s unit2=%s'%(
+    s = '''grey color=%s scalebar=%s title="%s" 
+        label1=%s unit1=%s label2=%s unit2=%s
+        wheretitle=t wherexlabel=b
+        '''%(
         color, scalebar,title, label1, unit1, label2, unit2)
 
     if( len(minval) > 0 ):
@@ -105,3 +110,28 @@ def proto_landscape(d):
                 'name': '%d'%i})
 
     return landscape(d_ref, d_perturb)
+
+def get_val(file_name):
+   val = co('sfdisfil < %s'%file_name, shell=True) \
+       .decode('utf-8') \
+       .split(':')[-1] \
+       .replace(' ','')
+   return float(val)
+
+def get_norm(file_name):
+    return float(co('sfattr < %s.rsf'%file_name.replace('.rsf',''), 
+        shell=True) \
+            .decode('utf-8') \
+            .split('\n')[3] \
+            .split('=')[-1] \
+            .replace(' ',''))
+
+def attach(s, suf):
+    t = re.sub('[0-9]*', '', s)
+    return s[:len(t)] + suf + s[len(t):]
+
+def get_mode(branch):
+    if( branch == 'sobolev' ):
+        return 0
+    elif( branch == 'w2' ):
+        return 1

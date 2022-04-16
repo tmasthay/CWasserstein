@@ -147,12 +147,12 @@ def create_base():
     nx = N
     bx = dx * nx
     
-    nt = 100
+    nt = 3000
     dt = 0.0071
 
     dt = 0.03
 
-    amp = 1.0e3
+    amp = 1.0e15
     snr = 2.0
     
     #Check that noise is actually get added properly
@@ -176,6 +176,7 @@ def create_base():
             'nb' : 70,
             'fm' : 1.0,
             'amp': amp,
+            'verb': 1,
             'noise': amp / snr,
             'vp_expr': '0.5 + 10*sin(x1+x2)',
             'vs_expr': '0.707 * input',

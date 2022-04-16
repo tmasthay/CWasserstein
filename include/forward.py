@@ -49,20 +49,20 @@ def  forward(d):
 
     #noise level
     noise = d['noise']
+
+    #verbosity
+    verb = d['verb']
  
-    def forward_command(nbt, fmt, dtt, ssxft, sszft, esxft, eszft, nxft, nzft,kt):
+    def forward_command(nbt, fmt, dtt, ssxft, sszft, esxft, eszft, nxft, nzft,kt, verbb):
         s = 'nb=%d fm=%d dt=%.15f nt=%s kt=%s ssxf=%s sszf=%s'%(nbt,fmt,dtt,kt,kt,ssxft,sszft)
         s = s + ' esxf=%s eszf=%s nxf=%s nzf=%s'%(esxft, eszft, nxft, nzft)
-        s = s + ' amp=%.4f'%amp
+        s = s + ' amp=%.4f verb=%d'%(amp, verbb)
         t = './${SOURCES[3]} vs=${SOURCES[1]} rho=${SOURCES[2]} wavx=${TARGETS[1]}'
         return t + ' ' + s
- 
-    path = 'include/'
-    src = path + 'myelastic.c'
-    elas_exe = src.replace('.c', '.exe')
 
-    fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3)
+    fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3, verb)
 
+    elas_exe = './include/elastic_top.exe'
 
 #    Flow('%s %s'%(get_field('wavz'), get_field('wavx')), \
 #         '%s %s %s %s'%(vp, vs, rho, elas_exe), \
