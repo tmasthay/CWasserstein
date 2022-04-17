@@ -110,6 +110,7 @@ public:
            init_ren = true;
        }
 
+       
        //sanity check dimensions
        assert(m_ren.size() == data_ren.size());
        assert(m_ren[0].size() == num_rec * nt);

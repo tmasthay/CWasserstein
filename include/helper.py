@@ -133,5 +133,8 @@ def attach(s, suf):
 def get_mode(branch):
     if( branch == 'sobolev' ):
         return 0
-    elif( branch == 'w2' ):
+    elif( branch == 'w2split' ):
         return 1
+    elif( branch == 'w2square' ):
+        return 2
+    return -1
