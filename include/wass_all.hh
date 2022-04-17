@@ -35,7 +35,7 @@ using namespace std;
 //template<class T> using Ctn=vector<T>;
 
 template<class T>
-class WassSquare : public WassSlicer<T>{
+class WassLinExp : public WassSlicer<T>{
 protected:
     T c = 1.0;
     T c_inv = 1.0;

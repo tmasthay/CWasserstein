@@ -75,27 +75,29 @@ int main(int argc, char* argv[]){
             do_renormalization);
         value = my_misfit.eval(f_vec);
     }
-    else if( mode == 1 ){
+    else if( mode > 1 ){
        cerr << "Doing wasserstein\n";
        valarray<float> t_vec(0.0, nt); t >> t_vec;
        cerr << "np = " << np;
        valarray<float> p_vec(0.0, np); p >> p_vec;
        cerr << "got p and t\n";
-       WassSplit<float> my_misfit(g_vec, t_vec, p_vec, nx);
-       value = my_misfit.eval(f_vec);
-    }
-    else if( mode == 2 ){
-       cerr << "Doing wasserstein square\n";
-       valarray<float> t_vec(0.0, nt); t >> t_vec;
-       cerr << "np = " << np;
-       valarray<float> p_vec(0.0, np); p >> p_vec;
-       cerr << "got p and t\n";
-       WassSquare<float> my_misfit(g_vec, t_vec, p_vec, nx);
-       value = my_misfit.eval(f_vec);
-    }
-    else{
-        cerr << "Mode " << mode << " not supported! Exiting!" << endl;
-        exit(-2);
+       
+       if( mode == 1 ){
+           WassSplit2<float> my_misfit(g_vec, t_vec, p_vec, nx);
+           value = my_misfit.eval(f_vec);
+       }
+       else if( mode == 2 ){
+           WassSquare<float> my_misfit(g_vec, t_vec, p_vec, nx);
+           value = my_misfit.eval(f_vec);
+       }
+       else if( mode == 3 ){
+           WassLinExp<float> my_misfit(g_vec, t_vec, p_vec, nx);
+           value = my_misfit.eval(f_vec);
+       }
+       else{
+           cerr << "Mode " << mode << " not supported in driver.cc\n";
+           exit(-2);
+       }
     }
 
   
