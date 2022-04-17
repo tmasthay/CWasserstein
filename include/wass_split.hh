@@ -48,7 +48,7 @@ public:
 
         if( neg_int >= tol ){
             T neg_int_inv = 1.0 / neg_int;
-            for(int i = 0; i < N; i++) g[1][i] = neg_int_int * g[1][i];
+            for(int i = 0; i < N; i++) g[1][i] = neg_int_inv * g[1][i];
         }
         else{
             for(int i = 0; i < N; i++) g[1][i] = 0.0;

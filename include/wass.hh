@@ -12,7 +12,7 @@ using namespace std;
 
 template< class T >
 class Wass : public Misfit<T>{
-private:
+protected:
     valarray<T> data;
     valarray<valarray<T> > data_ren;
     valarray<T> quantile_var;
