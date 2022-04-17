@@ -15,7 +15,7 @@ cflags='-I. -I./include -w'
 #cflags=''
 
 #define mode of execution
-mode='sobolev'
+mode='w2'
 mode_no = get_mode(mode)
 sobolev_norm = 0.0
 

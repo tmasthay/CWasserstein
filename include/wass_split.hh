@@ -22,7 +22,7 @@ public:
         //tmp var for efficiency
         int N = f.size();
  
-        assert( N == this->nt );
+        assert( N == this->get_nt() );
        
         T pos_int = 0.0;
         T neg_int = 0.0; 
