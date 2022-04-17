@@ -1,7 +1,7 @@
 #ifndef WASS_SQUARE_H
 #define WASS_SQUARE_H
 
-#include "wass.hh"
+#include "wass_slicer.hh"
 #include <vector>
 #include <cassert>
 

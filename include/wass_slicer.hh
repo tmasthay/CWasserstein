@@ -17,7 +17,7 @@ public:
     //inherit superclass constructor
     using Wass<T>::Wass;
 
-    virtual T renorm_op(T x) = 0;
+    virtual T renorm_op(T x, int i_dist) = 0;
 
     void set_dists(int y) { this->num_dists = y; }
     void set_tol(T y) { this->tol = y; }
@@ -41,7 +41,7 @@ public:
                 //split between positive and negative parts
                 for(int i_t = 0; i_t < this->nt; i_t++){
                     int i_gbl = i_t + i_r * this->nt;
-                    g[i_dists][i_gbl] = renorm_op(g[i_dists][i_gbl]);
+                    g[i_dists][i_gbl] = renorm_op(g[i_dists][i_gbl], i_dist);
                     if( i_t >= 1 ){
                         T dt = this->t[i_t] - this->t[i_t-1];
                         C[i_dists] += 0.5 * dt * (g[i_dists][i_gbl] + g[i_dists][i_gbl-1]);

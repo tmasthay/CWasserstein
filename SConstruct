@@ -15,7 +15,7 @@ cflags='-I. -I./include -w'
 #cflags=''
 
 #define mode of execution
-mode='w2'
+mode='w2split'
 mode_no = get_mode(mode)
 sobolev_norm = 0.0
 
@@ -142,7 +142,7 @@ for zz in z:
                         else wavx_syn_fourier, 
                     wass_exe),
                  sobolev_cmd)
-        elif(mode == 'w2'):
+        elif(mode[0:2] == 'w2'):
              w2_cmd = wass_cmd + ' mode=%d'%mode_no
              Flow('zdist%d'%i,
                  '%s %s t p %s'%(

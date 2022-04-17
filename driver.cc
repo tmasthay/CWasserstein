@@ -2,6 +2,7 @@
 #include "include/cub.hh"
 #include "include/wass_split.hh"
 #include "include/sobolev.hh"
+#include "include/wass_square.hh"
 #include <vector>
 #include <valarray>
 #include <iostream>
@@ -83,6 +84,15 @@ int main(int argc, char* argv[]){
        valarray<float> p_vec(0.0, np); p >> p_vec;
        cerr << "got p and t\n";
        WassSplit<float> my_misfit(g_vec, t_vec, p_vec, nx);
+       value = my_misfit.eval(f_vec);
+    }
+    else if( mode == 2 ){
+       cerr << "Doing wasserstein square\n";
+       valarray<float> t_vec(0.0, nt); t >> t_vec;
+       cerr << "np = " << np;
+       valarray<float> p_vec(0.0, np); p >> p_vec;
+       cerr << "got p and t\n";
+       WassSquare<float> my_misfit(g_vec, t_vec, p_vec, nx);
        value = my_misfit.eval(f_vec);
     }
     else{
