@@ -1,8 +1,6 @@
 #include "include/misfit.hh"
-#include "include/cub.hh"
-#include "include/wass_split.hh"
+#include "include/wass_all.hh"
 #include "include/sobolev.hh"
-#include "include/wass_square.hh"
 #include <vector>
 #include <valarray>
 #include <iostream>
