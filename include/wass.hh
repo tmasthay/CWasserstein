@@ -170,8 +170,6 @@ public:
        }
        return total_sum;
     }
-
-    int get_nt() return this->nt;
 };
 
 #endif

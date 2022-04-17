@@ -31,7 +31,7 @@ public:
             if( g[0][i] < 0 ) g[0][i] = 0.0;
             if( g[1][i] > 0 ) g[1][i] = 0.0;
             if( i >= 1 ){
-                T dt = t[i] - t[i-1];
+                T dt = this->t[i] - this->t[i-1];
                 pos_int += 0.5 * dt * (g[0][i] + g[0][i-1]);
                 neg_int += 0.5 * dt * (g[1][i] + g[1][i-1]);
             }
