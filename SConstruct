@@ -15,9 +15,15 @@ cflags='-I. -I./include -w'
 #cflags=''
 
 #define mode of execution
-mode='w2split'
+#mode='sobolev' if len(sys.argv) == 1 else sys.argv[1].split('mode=')[-1]
+mode='w2linexp'
 mode_no = get_mode(mode)
 sobolev_norm = 0.0
+
+#define parameters
+params = dict()
+if( 'linexp' in mode ): params = {'c1': 10.0} 
+param_string = dict_to_str(params)
 
 #add to compilation command
 proj.Prepend(LIBS=libs)
@@ -144,6 +150,7 @@ for zz in z:
                  sobolev_cmd)
         elif(mode[0:2] == 'w2'):
              w2_cmd = wass_cmd + ' mode=%d'%mode_no
+             w2_cmd = w2_cmd + ' %s'%param_string
              Flow('zdist%d'%i,
                  '%s %s t p %s'%(
                      wavz_curr,

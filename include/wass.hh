@@ -19,6 +19,7 @@ protected:
     valarray<T> t;
     valarray<T> p;
     int num_rec;
+    int curr_trace;
     int nt;
     int np;
     T eps=1e-10;
@@ -98,14 +99,19 @@ public:
    
     
     virtual valarray<valarray<T> > renormalize(valarray<T> f) = 0; // pure virtual
+    virtual bool prescan_hyper(const valarray<T>& f) = 0;
     
     //implement virtual evaluation function -- workhorse function
     T eval(const valarray<T> &m){
+
+       //setup any prescanning hyperparameters
+       bool prescan = prescan_hyper(m);
+
        //renormalize synthetic data
        const valarray<valarray<T> > m_ren(renormalize(m));
 
        //renormalize data if needed
-       if( not init_ren ){
+       if( not init_ren or prescan ){
            data_ren = renormalize(data);
            init_ren = true;
        }

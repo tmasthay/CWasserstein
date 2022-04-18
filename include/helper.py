@@ -130,11 +130,22 @@ def attach(s, suf):
     t = re.sub('[0-9]*', '', s)
     return s[:len(t)] + suf + s[len(t):]
 
+def dict_to_str(d):
+    s = ''
+    for key in d.keys():
+        s = '%s = %s\n'%(key,str(d[key]))
+    return s
+
 def get_mode(branch):
+    branch = branch.lower()
     if( branch == 'sobolev' ):
         return 0
     elif( branch == 'w2split' ):
         return 1
     elif( branch == 'w2square' ):
         return 2
+    elif( branch == 'w2linexp' ):
+        return 3
+    elif( branch == 'w2linear' ):
+        return 4
     return -1
