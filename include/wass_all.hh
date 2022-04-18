@@ -92,4 +92,19 @@ public:
         return x + this->curr_shift;
     }
 };
+
+template<class T>
+class WassExp : public WassSlicer<T>{
+protected:
+    T c = 1.0;
+public:
+    //inherit superclass constructor
+    using WassSlicer<T>::WassSlicer;
+
+    void set_sharpness(T x) { this-> c = x; }
+
+    T renorm_op(T x, int i_dist){
+        return exp(c*x);
+    }
+};
 #endif

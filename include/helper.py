@@ -131,9 +131,11 @@ def attach(s, suf):
     return s[:len(t)] + suf + s[len(t):]
 
 def dict_to_str(d):
+    ignore_keys=[]
     s = ''
     for key in d.keys():
-        s = '%s = %s\n'%(key,str(d[key]))
+        if( key not in ignore_keys ):
+            s += '%s=%s\n'%(key,str(d[key]))
     return s
 
 def get_mode(branch):
@@ -148,4 +150,12 @@ def get_mode(branch):
         return 3
     elif( branch == 'w2linear' ):
         return 4
+    elif( branch == 'w2exp' ):
+        return 5
     return -1
+
+def get_scons_field(the_name):
+    return co('''grep "^%s[ ]*=" SConstruct'''%the_name, shell=True) \
+    .decode('utf-8') \
+    .replace('\n', '') \
+    .split('=')[-1]

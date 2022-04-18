@@ -1,4 +1,3 @@
-from rsf.proj import *
 import numpy as np
 import copy
 import sys
@@ -21,8 +20,9 @@ mode_no = get_mode(mode)
 sobolev_norm = 0.0
 
 #define parameters
-params = dict()
-if( 'linexp' in mode ): params = {'c1': 10.0} 
+cvals = 10.0**np.array(range(-5,5))
+params = dict({'c1': cvals[9]})
+if( 'linexp' not in mode ): params = dict()
 param_string = dict_to_str(params)
 
 #add to compilation command

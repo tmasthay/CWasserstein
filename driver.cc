@@ -19,6 +19,8 @@ int main(int argc, char* argv[]){
     CUB p("p", "i"); p.headin(); //p.report();
     //CUB output_file("out", "o"); output_file.setup(1);
 
+    int verbose;
+    if(!sf_getint("v", &verbose)) verbose = 0; 
     //get mode of execution
     int mode;
     if(!sf_getint("mode", &mode)) mode = 0;
@@ -44,12 +46,9 @@ int main(int argc, char* argv[]){
     assert( nt == ntg ); assert( abs(dt - dtg) < eps );
 //    assert( nt == nt_true ); assert( abs(dt - dt_true) < eps );
 
-    cerr << "asserts passed\n";
     //read in data
     valarray<float> f_vec(0.0, nx * nt); f >> f_vec;
-    cerr << "f created\n";
     valarray<float> g_vec(0.0, nx * nt); g >> g_vec;
-    cerr << "g created\n";
     /*
     valarray<float> t_vec(0.0, nt); t >> t_vec;
     cerr << "t created\n";
@@ -64,7 +63,6 @@ int main(int argc, char* argv[]){
         bool do_renormalization = false;
         float s;
         if(!sf_getfloat("s",&s)) s = -1.0;
-        cerr << "S == " << s << "!!!\n";
         Sobolev<float> my_misfit(g_vec, 
             s, 
             nx, 
@@ -76,22 +74,22 @@ int main(int argc, char* argv[]){
         value = my_misfit.eval(f_vec);
     }
     else if( mode >= 1 ){
-       cerr << "Doing wasserstein\n";
        valarray<float> t_vec(0.0, nt); t >> t_vec;
-       cerr << "np = " << np;
        valarray<float> p_vec(0.0, np); p >> p_vec;
-       cerr << "got p and t\n";
        
        if( mode == 1 ){
+           if(verbose) cerr << "Wasserstein splitting\n";
            WassSplit2<float> my_misfit(g_vec, t_vec, p_vec, nx);
            my_misfit.set_dists(2);
            value = my_misfit.eval(f_vec);
        }
        else if( mode == 2 ){
+           if( verbose ) cerr << "Wasserstein squaring\n";
            WassSquare<float> my_misfit(g_vec, t_vec, p_vec, nx);
            value = my_misfit.eval(f_vec);
        }
        else if( mode == 3 ){
+           if( verbose ) cerr << "Linexp\n";
            WassLinExp<float> my_misfit(g_vec, t_vec, p_vec, nx);
            float c;
            if(!sf_getfloat("c", &c)) c = 1.0; 
@@ -99,7 +97,13 @@ int main(int argc, char* argv[]){
            value = my_misfit.eval(f_vec);
        }
        else if( mode == 4 ){
+           if(verbose) cerr << "Linear\n";
            WassLin<float> my_misfit(g_vec, t_vec, p_vec, nx);
+           value = my_misfit.eval(f_vec);
+       }
+       else if( mode == 5 ){
+           if(verbose) cerr << "Exponential\n";
+           WassExp<float> my_misfit(g_vec, t_vec, p_vec, nx);
            value = my_misfit.eval(f_vec);
        }
        else{
