@@ -15,14 +15,14 @@ cflags='-I. -I./include -w'
 
 #define mode of execution
 #mode='sobolev' if len(sys.argv) == 1 else sys.argv[1].split('mode=')[-1]
-mode='w2linexp'
+mode='sobolev'
 mode_no = get_mode(mode)
-sobolev_norm = 0.0
+sobolev_norm = -1.0
 
 #define parameters
 cvals = 10.0**np.array(range(-5,5))
 params = dict({'c1': cvals[9]})
-if( 'linexp' not in mode ): params = dict()
+if( 'exp' not in mode ): params = dict()
 param_string = dict_to_str(params)
 
 #add to compilation command
@@ -101,6 +101,7 @@ for zz in z:
         of1 = re.sub('wavz', 'wavz%d'%i, output_files)
         new_output_files = re.sub('wavx', 'wavx%d'%i, of1)
 
+        print('i = %d, fc=%s'%(i, new_fc))
         #create new synthetic data
         Flow(new_output_files, input_files, new_fc)
 

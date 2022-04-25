@@ -65,6 +65,8 @@ xe = 0.8
 nx = 25
 x = np.linspace(xs, xe, nx)
 
+misfits = np.log(1.0 + misfits)
+
 Z,X = np.meshgrid(z,x)
 misfits = misfits.reshape(Z.shape)
 

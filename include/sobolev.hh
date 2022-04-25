@@ -100,7 +100,8 @@ public:
                     total_sum += diff*diff*kernel*dx*dt;
                 }
             }
-        } 
+        }
+        cerr << "total_sum == " << total_sum << endl; 
         return total_sum;
     }
 
