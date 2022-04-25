@@ -120,10 +120,7 @@ for zz in z:
         plot_str = 'transp plane=12 | '
         plot_str += grey('%.2f,%.2f'%(zz,xx), color='i')
         Result(wavz_curr, wavz_curr, plot_str)
-        """
-        z_curr_top = surface_obs(wavz_curr)
-        x_curr_top = surface_obs(wavx_curr)
-        """
+
 
         wass_cmd = '''
             ./${SOURCES[4]} data=${SOURCES[1]} t=${SOURCES[2]} p=${SOURCES[3]} 

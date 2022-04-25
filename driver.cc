@@ -41,10 +41,19 @@ int main(int argc, char* argv[]){
     sf_axis pa0 = p.getax(0); int np = sf_n(pa0); T dp = sf_d(pa0);
 
     int zs, xs;
+    float bz, ez, bx, ex;
     int even_shift = (int) sqrt(n_cases);
 
+    //parse arguments
     if(!sf_getint("zs", &zs)) zs = even_shift;
     if(!sf_getint("xs", &xs)) xs = even_shift;
+    if(!sf_getfloat("bz", &bz)) bz = 0.0;
+    if(!sf_getfloat("bx", &bx)) bx = 0.0;
+    if(!sf_getfloat("ez", &ez)) ez = 1.0;
+    if(!sf_getfloat("ex", &ex)) ex = 1.0;
+ 
+    float dz = (ez - bz) / ( (float) zs );
+    float dx = (ex - bx) / ( (float) xs );
 
     //sanity assertions
     double eps=1e-5;
@@ -58,6 +67,10 @@ int main(int argc, char* argv[]){
     output_file = sf_output("out");
     sf_putint(output_file, "n1", zs);
     sf_putint(output_file, "n2", xs);
+    sf_putfloat(output_file, "o1", bz);
+    sf_putfloat(output_file, "o2", bx);
+    sf_putfloat(output_file, "d1", dz);
+    sf_putfloat(output_file, "d2", dx);    
 
     //read in data
     for(int iz = 0; iz < zs; iz++){
