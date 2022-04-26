@@ -39,7 +39,7 @@ ps = [{},
     ]
 
 #add other param for setting nz,nx simultaneously
-n_all = 10
+n_all = 4
 #create z for convexity
 zs = 0.2
 ze = 0.8
