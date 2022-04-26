@@ -140,7 +140,7 @@ for (i,mode) in enumerate(modes):
         Flow('distz_%d'%i, 'allz_w2 %s t p %s'%(wavz_syn, wass_exe), cmd)
         Flow('distx_%d'%i, 'allx_w2 %s t p %s'%(wavx_syn, wass_exe), cmd)
     Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
-    clr='viridis'
+    clr=''
     Result('fulldist_%d'%i, 'fulldist_%d'%i, 
         '''
         grey color=%s scalebar=y title="%s" 
