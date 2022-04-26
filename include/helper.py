@@ -159,3 +159,15 @@ def get_scons_field(the_name):
     .decode('utf-8') \
     .replace('\n', '') \
     .split('=')[-1]
+
+def modify_src(zz, xx, cmd):
+    cmd1 = re.sub('sszf=.*? ', 'sszf=%f '%zz, cmd)
+    cmd2 = re.sub('eszf=.*? ', 'eszf=%f '%zz, cmd1)
+    cmd3 = re.sub('ssxf=.*? ', 'ssxf=%f '%xx, cmd2)
+    cmd4 = re.sub('esxf=.*? ', 'esxf=%f '%xx, cmd3)
+    return cmd4
+
+def modify_of(i, of):
+   of1 = re.sub('wavz', 'wavz%d'%i, of)
+   return re.sub('wavx', 'wavx%d'%i, of1)
+    

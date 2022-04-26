@@ -15,7 +15,7 @@ cflags='-I. -I./include -w'
 
 #define mode of execution
 #mode='sobolev' if len(sys.argv) == 1 else sys.argv[1].split('mode=')[-1]
-mode='sobolev'
+mode='w2square'
 mode_no = get_mode(mode)
 sobolev_norm = -1.0
 
@@ -64,29 +64,27 @@ fourier_command = 'fft1 | fft3 sign=1 | real'
 Flow(wavz_syn_fourier, wavz_syn, fourier_command)
 Flow(wavx_syn_fourier, wavx_syn, fourier_command)
 
-"""
-z_syn_top = surface_obs(wavz_syn)
-x_syn_top = surface_obs(wavx_syn)
-"""
-
-
 #pull out "synthetic" for future computations
 output_files = re.sub('_synthetic', '', output_files)
 
 #create z for convexity
 zs = 0.4
 ze = 0.6
-nz = 25
+nz = 4
 z = np.linspace(zs, ze, nz)
 
 #create x for convexity
 xs = 0.2
 xe = 0.8
-nx = 25
+nx = 4
 x = np.linspace(xs, xe, nx)
 
-#creat convexity cases by string subs on command
+#create convexity cases by string subs on command
 i = 0
+
+#all cases 
+allz = ''
+allx = ''
 
 for zz in z:
     for xx in x:
@@ -94,14 +92,9 @@ for zz in z:
         i += 1
   
         #do string manipulation to create new file
-        fc1 = re.sub('sszf=.*? ', 'sszf=%f '%zz, fc)
-        fc2 = re.sub('eszf=.*? ', 'eszf=%f '%zz, fc1)
-        fc3 = re.sub('ssxf=.*? ', 'ssxf=%f '%xx, fc2)
-        new_fc = re.sub('esxf=.*? ', 'esxf=%f '%xx, fc3)
-        of1 = re.sub('wavz', 'wavz%d'%i, output_files)
-        new_output_files = re.sub('wavx', 'wavx%d'%i, of1)
+        new_fc = modify_src(zz, xx, fc)
+        new_output_files = modify_of(i, output_files)
 
-        print('i = %d, fc=%s'%(i, new_fc))
         #create new synthetic data
         Flow(new_output_files, input_files, new_fc)
 
@@ -109,21 +102,27 @@ for zz in z:
         wavz_curr = new_output_files.split(' ')[0]
         wavx_curr = new_output_files.split(' ')[1]
 
-        if( mode == 'sobolev' ):
-            wavz_curr_fourier = attach(wavz_curr, 'fft')
-            wavx_curr_fourier = attach(wavx_curr, 'fft')
+        if( mode == 'sobolev' and sobolev_norm > 0.0 ):
+            wavz_orig = wavz_curr
+            wavx_orig = wavx_curr
+            wavz_curr = attach(wavz_curr, 'fft')
+            wavx_curr = attach(wavx_curr, 'fft')
  
-            Flow(wavz_curr_fourier, wavz_curr, fourier_command)
-            Flow(wavx_curr_fourier, wavx_curr, fourier_command)
+            Flow(wavz_curr, wavz_orig, fourier_command)
+            Flow(wavx_curr, wavx_orig, fourier_command)            
 
         #plot_str = 'put d1=%.4f d2=%.4f'%(d['dx'], d['dt'])
         plot_str = 'transp plane=12 | '
         plot_str += grey('%.2f,%.2f'%(zz,xx), color='i')
-        Result(wavz_curr, wavz_curr, plot_str)
+        #Result(wavz_curr, wavz_curr, plot_str)
 
+        allz += wavz_curr + '.rsf '
+        allx += wavx_curr + '.rsf '
 
+        """
         wass_cmd = '''
-            ./${SOURCES[4]} data=${SOURCES[1]} t=${SOURCES[2]} p=${SOURCES[3]} 
+            ./${SOURCES[4]} data=${SOURCES[1]} t=${SOURCES[2]}
+            p= 
             '''
         if( mode == 'sobolev' ):
             sobolev_cmd = wass_cmd + ' mode=%d s=%.4f'%(mode_no,
@@ -160,6 +159,39 @@ for zz in z:
                      wavx_curr,
                      wavx_syn,
                      wass_exe),
-                 w2_cmd)
+                 w2_cmd)"""
+
+allz = allz[:-1]
+allx = allx[:-1]
+
+Flow('allz', None, 'sfcat %s'%allz)
+Flow('allx', None, 'sfcat %s'%allx)
+
+wass_cmd = '''
+    ./${SOURCES[4]} 
+    data=${SOURCES[1]} 
+    t=${SOURCES[2]} 
+    p=${SOURCES[3]}
+    bz=%.4f
+    ez=%.4f
+    bx=%.4f
+    ex=%.4f
+    zs=%d
+    xs=%d
+    mode=%s
+    '''%(z[0], z[-1], x[0], x[-1], nz, nx, mode_no)
+
+if( mode == 'sobolev' ):
+    Flow('distz', 'allz %s t p %s'%(wavz_syn_fourier, wass_exe),
+        wass_cmd + ' s=%f'%sobolev_norm)
+    Flow('distx', 'allx %s t p %s'%(wavx_syn_fourier, wass_exe),
+        wass_cmd + ' s=%f'%sobolev_norm)
+elif( 'w2' in mode ):
+    wass_cmd = wass_cmd + ' ' + param_string
+    Flow('distz', 'allz %s t p %s'%(wavz_syn, wass_exe), wass_cmd)
+    Flow('distx', 'allx %s t p %s'%(wavx_syn, wass_exe), wass_cmd)
+
+Flow('fulldist', 'distz distx', 'add ${SOURCES[1]}')
+Result('fulldist', 'fulldist', 'grey')
 
 proj.End()
