@@ -62,7 +62,7 @@ def  forward(d):
 
     fc = forward_command(nb, fm, d3, ssxf, sszf, esxf, eszf, nsx, nsz, n3, verb)
 
-    elas_exe = './include/elastic_top.exe'
+    elas_exe = './include/elastictop.exe'
 
 #    Flow('%s %s'%(get_field('wavz'), get_field('wavx')), \
 #         '%s %s %s %s'%(vp, vs, rho, elas_exe), \

@@ -1,7 +1,7 @@
 #ifndef WASS_ALL_H
 #define WASS_ALL_H
 
-#include "wass_slicer.hh"
+#include "wassslicer.hh"
 #include <vector>
 #include <cassert>
 

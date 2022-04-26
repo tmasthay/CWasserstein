@@ -1,5 +1,5 @@
 #include "include/cub.hh"
-#include "include/wass_all.hh"
+#include "include/wassall.hh"
 #include "include/sobolev.hh"
 #include <vector>
 #include <valarray>
