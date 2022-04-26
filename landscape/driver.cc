@@ -90,7 +90,6 @@ int main(int argc, char* argv[]){
     //compute distances
     for(int iz = 0; iz < zs; iz++){
         for(int ix = 0; ix < xs; ix++){ 
-            cerr << ix << "," << iz << endl;
             float value = 0.0;
             int case_no = (ix + iz*xs)*nx*nt;
             gslice curr_slice(case_no,
@@ -156,8 +155,6 @@ int main(int argc, char* argv[]){
             sf_floatwrite(&vals[iz][ix], 1, output_file);
         }
     }
-    cerr << "Wrote correctly\n";
-
     free(*vals); free(vals);
     exit(0);
 }

@@ -192,7 +192,7 @@ def create_reference_data():
 
     return output_files, input_files, fc, d
 
-def create_synthetic_data(z, x, modes, np_factor=1.0):
+def create_synthetic_data(z, x, modes, ps, np_factor=1.0):
     w2_created = False
     sobolev_created = False
 
@@ -214,12 +214,16 @@ def create_synthetic_data(z, x, modes, np_factor=1.0):
     allz_sobolev = ''
     allx_sobolev = ''
 
-    for mode in modes:
+    for (idx, mode) in enumerate(modes):
         i = 0
         for zz in z:
             for xx in x:
+                sobolev_norm = -10.0 \
+                    if not 's' in ps[idx].keys() else ps[idx]['s']
                 w2_redun = ('w2' in mode and w2_created)
-                l2_redun = ('sobolev' == mode and s == 0.0 and w2_created)
+                l2_redun = ('sobolev' == mode \
+                    and sobolev_norm == 0.0 \
+                    and w2_created)
                 sob_redun = ('sobolev' == mode and sobolev_created)
  
                 if(w2_redun or l2_redun or sob_redun):
@@ -246,14 +250,16 @@ def create_synthetic_data(z, x, modes, np_factor=1.0):
         
                 if( not sobolev_created \
                     and mode == 'sobolev' \
-                    and sobolev_norm > 0.0 ):
+                    and abs(sobolev_norm) > 0.0 ):
                     wavz_orig = wavz_curr
                     wavx_orig = wavx_curr
                     wavz_curr = attach(wavz_curr, 'fft')
                     wavx_curr = attach(wavx_curr, 'fft')
-         
-                    Flow(wavz_curr, wavz_orig, fourier_command)
-                    Flow(wavx_curr, wavx_orig, fourier_command)
+
+                    fourier_cmd = 'fft1 | fft3 sign=1 | real'
+ 
+                    Flow(wavz_curr, wavz_orig, fourier_cmd)
+                    Flow(wavx_curr, wavx_orig, fourier_cmd)
 
                     allz_sobolev += wavz_curr + '.rsf'
                     allx_sobolev += wavx_curr + '.rsf'

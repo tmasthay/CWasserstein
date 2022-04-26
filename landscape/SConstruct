@@ -71,9 +71,18 @@ Flow('allz', None, 'sfcat %s'%allz)
 Flow('allx', None, 'sfcat %s'%allx)
 """
 
-modes = ['w2square']
+modes = ['w2split', 
+    'w2square', 
+    'w2linexp',
+    'w2linear',
+    'w2exp']
 mode_nos = [get_mode(m) for m in modes]
-ps = [dict()]
+ps = [{},
+    {},
+    {'c1': 1.0},
+    {},
+    {'c1': 1.0}
+    ]
 
 #add other param for setting nz,nx simultaneously
 n_all = 25
@@ -91,7 +100,7 @@ x = np.linspace(xs, xe, nx)
 
 #define probability space granularity
 np_factor = 1.0
-create_synthetic_data(z, x, modes, np_factor)
+create_synthetic_data(z, x, modes, ps, np_factor)
 
 wc = lambda m : '''
     ./${SOURCES[4]} 
@@ -132,13 +141,10 @@ for (i,mode) in enumerate(modes):
         Flow('distx_%d'%i, 'allx_w2 %s t p %s'%(wavx_syn, wass_exe), cmd)
     Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
     clr='viridis'
-    Result('fulldist%d'%i, 'fulldist%d'%i, 
+    Result('fulldist_%d'%i, 'fulldist_%d'%i, 
         '''
         grey color=%s scalebar=y title="%s" 
             label1=Zshift label2=Xshift
-        '''%(clr, mode))
-
-
-
+        '''%(clr, mode + ' ' + dict_to_str(ps[i])))
 
 proj.End()

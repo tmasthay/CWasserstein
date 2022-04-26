@@ -147,7 +147,7 @@ def create_base():
     nx = N
     bx = dx * nx
     
-    nt = 3000
+    nt = 100
     dt = 0.0071
 
     dt = 0.03
