@@ -192,6 +192,14 @@ elif( 'w2' in mode ):
     Flow('distx', 'allx %s t p %s'%(wavx_syn, wass_exe), wass_cmd)
 
 Flow('fulldist', 'distz distx', 'add ${SOURCES[1]}')
-Result('fulldist', 'fulldist', 'grey')
+
+
+all_colors = '''cubeyf1 gist_earth izoaz linearlfb lb montag owb rwb seismic spectral
+ viridis acton bamako batlow berlin bilbao broc brocO buda cork corkO 
+ davos devon grayC hawaii imola inferno lajolla lapaz lisbon magma nuuk 
+ oleron oslo plasma roma romaO tofino tokyo turku vik vikO'''.split(' ')
+
+clr='viridis'
+Result('fulldist', 'fulldist', 'grey color=%s scalebar=y title="%s" label1=Zshift label2=Xshift'%(clr, mode))
 
 proj.End()
