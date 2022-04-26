@@ -1,3 +1,4 @@
+from rsf.proj import *
 import numpy as np
 import copy
 import sys
@@ -11,7 +12,6 @@ proj = Project()
 #define libs and cflags
 libs=['rsf++']
 cflags='-I. -I./include -w'
-#cflags=''
 
 #add to compilation command
 proj.Prepend(LIBS=libs)
@@ -23,60 +23,14 @@ elas = proj.Program('./include/elastic_top.c')
 driv = proj.Program('driver.cc')
 wass_exe = str(driv[0])
 
-"""
-#create convexity cases by string subs on command
-i = 0
-
-#all cases 
-allz = ''
-allx = ''
-
-for zz in z:
-    for xx in x:
-        #increment case number
-        i += 1
-  
-        #do string manipulation to create new file
-        new_fc = modify_src(zz, xx, fc)
-        new_output_files = modify_of(i, output_files)
-
-        #create new synthetic data
-        Flow(new_output_files, input_files, new_fc)
-
-        #get surface observations
-        wavz_curr = new_output_files.split(' ')[0]
-        wavx_curr = new_output_files.split(' ')[1]
-
-        if( mode == 'sobolev' and sobolev_norm > 0.0 ):
-            wavz_orig = wavz_curr
-            wavx_orig = wavx_curr
-            wavz_curr = attach(wavz_curr, 'fft')
-            wavx_curr = attach(wavx_curr, 'fft')
- 
-            Flow(wavz_curr, wavz_orig, fourier_command)
-            Flow(wavx_curr, wavx_orig, fourier_command)            
-
-        #plot_str = 'put d1=%.4f d2=%.4f'%(d['dx'], d['dt'])
-        plot_str = 'transp plane=12 | '
-        plot_str += grey('%.2f,%.2f'%(zz,xx), color='i')
-        #Result(wavz_curr, wavz_curr, plot_str)
-
-        allz += wavz_curr + '.rsf '
-        allx += wavx_curr + '.rsf '
-
-allz = allz[:-1]
-allx = allx[:-1]
-
-Flow('allz', None, 'sfcat %s'%allz)
-Flow('allx', None, 'sfcat %s'%allx)
-"""
-
-modes = ['w2split', 
+modes = [ 
     'w2square', 
     'w2linexp',
     'w2linear',
     'w2exp']
+
 mode_nos = [get_mode(m) for m in modes]
+
 ps = [{},
     {},
     {'c1': 1.0},
@@ -85,10 +39,10 @@ ps = [{},
     ]
 
 #add other param for setting nz,nx simultaneously
-n_all = 25
+n_all = 10
 #create z for convexity
-zs = 0.4
-ze = 0.6
+zs = 0.2
+ze = 0.8
 nz = n_all
 z = np.linspace(zs, ze, nz)
 
@@ -99,7 +53,7 @@ nx = n_all
 x = np.linspace(xs, xe, nx)
 
 #define probability space granularity
-np_factor = 1.0
+np_factor = 10.0
 create_synthetic_data(z, x, modes, ps, np_factor)
 
 wc = lambda m : '''

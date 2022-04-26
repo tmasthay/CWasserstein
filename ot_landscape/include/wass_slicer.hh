@@ -51,7 +51,7 @@ public:
                     }
                 }
             
-                if( C[i_dists] >= this->tol ){
+                if( C[i_dists] > this->tol ){
                     T C_inv = 1.0 / C[i_dists];
                     for(int i_t = 0; i_t < this->nt; i_t++){
                         int i_gbl = i_t + i_r * this->nt;
@@ -59,10 +59,12 @@ public:
                     }
                 }
                 else{
+                    cerr << "Unnormalizable\n";
+                    /*
                     for(int i_t = 0; i_t < this->nt; i_t++){
                         int i_gbl = i_t + i_r * this->nt;
                         g[i_dists][i_gbl] = 0.0;
-                    }
+                    }*/
                 }
             }
         }
