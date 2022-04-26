@@ -5,6 +5,7 @@ from forward import forward
 from subprocess import check_output as co
 from rsf.proj import *
 import re
+import base
 
 def grey(title, 
     color='seismic', 
@@ -135,7 +136,7 @@ def dict_to_str(d):
     s = ''
     for key in d.keys():
         if( key not in ignore_keys ):
-            s += '%s=%s\n'%(key,str(d[key]))
+            s += '%s=%s '%(key,str(d[key]))
     return s
 
 def get_mode(branch):
@@ -170,4 +171,104 @@ def modify_src(zz, xx, cmd):
 def modify_of(i, of):
    of1 = re.sub('wavz', 'wavz%d'%i, of)
    return re.sub('wavx', 'wavx%d'%i, of1)
-    
+
+def create_reference_data():
+    d = base.create_base()
+    output_files, input_files, fc = forward(d)
+    Flow(output_files, input_files, fc)
+
+    wavz_syn = output_files.split(' ')[0]
+    wavx_syn = output_files.split(' ')[1]
+
+    wavz_syn_fourier = attach(wavz_syn, 'fft')
+    wavx_syn_fourier = attach(wavx_syn, 'fft')
+
+    fourier_cmd = 'fft1 | fft3 sign=1 | real'
+
+    Flow(wavz_syn_fourier, wavz_syn, fourier_cmd)
+    Flow(wavx_syn_fourier, wavx_syn, fourier_cmd)
+
+    output_files = re.sub('_synthetic', '', output_files)
+
+    return output_files, input_files, fc, d
+
+def create_synthetic_data(z, x, modes, np_factor=1.0):
+    w2_created = False
+    sobolev_created = False
+
+    output_files, input_files, fc, d = create_reference_data()
+
+    #create p
+    n_probs = int(np_factor * d['nt'])
+    Flow('p', None, 
+        'math output="x1" n1=%d d1=%.8f o1=0.0'%(n_probs, 1.0 / n_probs))
+
+    #create t
+    Flow('t', None, 
+        'math output="x1" n1=%d d1=%.8f o1=0'%(d['nt'], d['dt']))
+
+    #define associated lists for w2 and sobolev cases
+    allz_w2 = ''
+    allx_w2 = ''
+
+    allz_sobolev = ''
+    allx_sobolev = ''
+
+    for mode in modes:
+        i = 0
+        for zz in z:
+            for xx in x:
+                w2_redun = ('w2' in mode and w2_created)
+                l2_redun = ('sobolev' == mode and s == 0.0 and w2_created)
+                sob_redun = ('sobolev' == mode and sobolev_created)
+ 
+                if(w2_redun or l2_redun or sob_redun):
+                    continue
+
+                if(w2_redun or l2_redun or sob_redun):
+                    print('''
+                        SHOULD NEVER SEE THIS TEXT: USE OF "continue" 
+                        KEYWORD IS FLAWED
+                        ''')
+                #increment case number
+                i += 1
+                 
+                #do string manipulation to create new file
+                new_fc = modify_src(zz, xx, fc) 
+                new_output_files = modify_of(i, output_files)
+        
+                #create new synthetic data
+                Flow(new_output_files, input_files, new_fc)
+        
+                #get surface observations
+                wavz_curr = new_output_files.split(' ')[0]
+                wavx_curr = new_output_files.split(' ')[1]
+        
+                if( not sobolev_created \
+                    and mode == 'sobolev' \
+                    and sobolev_norm > 0.0 ):
+                    wavz_orig = wavz_curr
+                    wavx_orig = wavx_curr
+                    wavz_curr = attach(wavz_curr, 'fft')
+                    wavx_curr = attach(wavx_curr, 'fft')
+         
+                    Flow(wavz_curr, wavz_orig, fourier_command)
+                    Flow(wavx_curr, wavx_orig, fourier_command)
+
+                    allz_sobolev += wavz_curr + '.rsf'
+                    allx_sobolev += wavx_curr + '.rsf'
+ 
+                    sobolev_created = True 
+        
+                if( not w2_created \
+                    and ('w2' in mode or \
+                        ('sobolev' == mode and sobolev_norm == 0.0))): 
+                    allz_w2 += wavz_curr + '.rsf '
+                    allx_w2 += wavx_curr + '.rsf '
+    if( len(allz_w2) > 0 ):
+        Flow('allz_w2', None, 'sfcat %s'%allz_w2)
+        Flow('allx_w2', None, 'sfcat %s'%allx_w2)
+    if( len(allx_w2) > 0 ):
+        Flow('allz_sobolev', None, 'sfcat %s'%allz_sobolev)
+        Flow('allx_sobolev', None, 'sfcat %s'%allx_sobolev)
+
