@@ -23,7 +23,7 @@ elas = proj.Program('./include/elastictop.c')
 driv = proj.Program('driver.cc')
 wass_exe = str(driv[0])
 
-modes = ['linexp']
+modes = ['w2linexp']
 
 mode_nos = [get_mode(m) for m in modes]
 
