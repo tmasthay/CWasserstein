@@ -58,6 +58,7 @@ int main(int argc, char* argv[]){
 
     //sanity assertions
     double eps=1e-5;
+    cerr << "nt,ntg=" << nt << "," << ntg << endl;
     assert( nx == nxg ); assert( abs(dx - dxg) < eps );
     assert( nt == ntg ); assert( abs(dt - dtg) < eps );
 //    assert( n_cases == ng_cases ); 
@@ -100,6 +101,7 @@ int main(int argc, char* argv[]){
                 bool do_renormalization = false;
                 float s;
                 if(!sf_getfloat("s",&s)) s = -1.0;
+                cerr << "HELLO\n";
                 Sobolev<float> my_misfit(g_vec, 
                     s, 
                     nx, 

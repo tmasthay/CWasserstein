@@ -2,7 +2,6 @@ import numpy as np
 import m8r
 import copy
 from rsf.proj import *
-from helper import grey
 
 def layered_medium(layer_vals, layer_ends, x):
     return np.array([layer_vals[i] for i in np.digitize(x, layer_ends)])
@@ -57,10 +56,9 @@ def create_vp(args):
 
     Flow(the_name, None, cmd)
 
-    plot_cmd = grey('P velocity', color='tokyo')
+    plot_cmd = 'grey title="P velocity" color=tokyo scalebar=y'
     Result(the_name, the_name, plot_cmd)
         
-
     return None
 
 @run_once
@@ -104,7 +102,7 @@ def create_vs(args):
 
     Flow(the_name, None, cmd)
 
-    plot_cmd = grey('S velocity', color='tokyo')
+    plot_cmd = 'grey title="S velocity" color=tokyo scalebar=y'
     Result(the_name, the_name, plot_cmd)
 
     return None
@@ -126,15 +124,14 @@ def create_rho(args):
     
     Flow(the_name, None, cmd)
 
-    plot_cmd = grey('Density', color='tokyo')
+    plot_cmd = 'grey title="Density" color=tokyo scalebar=y'
     Result(the_name, the_name, plot_cmd)
 
     return the_name, None, cmd
 
 def create_base():
     N = 200
-  
-    
+      
     az = 0.0
     bz = 700.0 
     nz = N
@@ -147,7 +144,7 @@ def create_base():
     nx = N
     bx = dx * nx
     
-    nt = 3000
+    nt = 2000
     dt = 0.0071
 
     dt = 0.03
@@ -158,7 +155,7 @@ def create_base():
     #Check that noise is actually get added properly
     
     d_forward = {
-            'case' : 'synthetic',
+            'case' : 'syntheticstacked',
             'oz' : az,
             'nz' : nz,
             'dz' : dz,
@@ -167,10 +164,16 @@ def create_base():
             'dx' : dx,
             'dt' :  dt,
             'nt' :  nt,
-            'sszf' :  0.5,
-            'ssxf' :  0.5,
-            'eszf' :  0.5,
-            'esxf' :  0.5,
+            'sszf' :  'sszf_synthetic.rsf',
+            'ssxf' :  'ssxf_synthetic.rsf',
+            'eszf' :  'eszf_synthetic.rsf',
+            'esxf' :  'esxf_synthetic.rsf',
+            'sszf_val' : 0.5,
+            'eszf_val' : 0.5,
+            'ssxf_val' : 0.5,
+            'esxf_val' : 0.5,
+            'numz_comp' : 1,
+            'numx_comp' : 1,
             'nsz' :  1,
             'nsx' :  1,
             'nb' : 70,

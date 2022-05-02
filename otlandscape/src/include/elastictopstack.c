@@ -1,0 +1,423 @@
+/* 2D 8-th order elastic wave propagation using sponge ABC
+ */
+/*
+  Copyright (C) 2014  Xi'an Jiaotong University (Pengliang Yang)
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+#include <rsf.h>
+#include <time.h>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+static int nb, nz, nx, nt, nzpad, nxpad;
+static float dz, dx, _dz, _dx, dt, fm;
+
+void expand2d(float** b, float** a)
+/*< expand domain of 'a' to 'b': source(a)-->destination(b) >*/
+{
+    int iz,ix;
+
+#ifdef _OPENMP
+#pragma omp parallel for default(none)		\
+    private(ix,iz)				\
+    shared(b,a,nb,nz,nx)
+#endif
+    for     (ix=0;ix<nx;ix++) {
+	for (iz=0;iz<nz;iz++) {
+	    b[nb+ix][nb+iz] = a[ix][iz];
+	}
+    }
+
+    for     (ix=0; ix<nxpad; ix++) {
+	for (iz=0; iz<nb;    iz++) {
+	    b[ix][      iz  ] = b[ix][nb  ];
+	    b[ix][nzpad-iz-1] = b[ix][nzpad-nb-1];
+	}
+    }
+
+    for     (ix=0; ix<nb;    ix++) {
+	for (iz=0; iz<nzpad; iz++) {
+	    b[ix 	 ][iz] = b[nb  		][iz];
+	    b[nxpad-ix-1 ][iz] = b[nxpad-nb-1	][iz];
+	}
+    }
+}
+
+
+void window2d(float **a, float **b)
+/*< window 'b' to 'a': source(b)-->destination(a) >*/
+{
+    int iz,ix;
+
+#ifdef _OPENMP
+#pragma omp parallel for default(none)		\
+    private(ix,iz)				\
+    shared(b,a,nb,nz,nx)
+#endif
+    for     (ix=0;ix<nx;ix++) {
+	for (iz=0;iz<nz;iz++) {
+	    a[ix][iz]=b[nb+ix][nb+iz] ;
+	}
+    }
+}
+
+
+void forward_uvx_uvz(float **uvx, float **uvz, float **txx, float **tzz, float **txz, float **rho)
+/*< forward step: update uvx, uvz >*/
+{
+    int i1, i2;
+    float diff1, diff2, diff3, diff4;
+
+#ifdef _OPENMP
+#pragma omp parallel for default(none)				\
+    private(i1,i2,diff1,diff2,diff3,diff4)			\
+    shared(uvx,uvz,txx,tzz,txz,rho,nxpad,nzpad,dt,_dx,_dz)
+#endif
+    for(i2=4; i2<nxpad-3; i2++)
+	for(i1=4; i1<nzpad-3; i1++)
+	{
+	    diff1 = 1.1962890625000f*(tzz[i2][i1]-tzz[i2][i1-1])
+		-0.0797526041667f*(tzz[i2][i1+1]-tzz[i2][i1-2])
+		+0.0095703125000f*(tzz[i2][i1+2]-tzz[i2][i1-3])
+		-0.0006975446429f*(tzz[i2][i1+3]-tzz[i2][i1-4]);
+	    diff2 = 1.1962890625000f*(txz[i2][i1]-txz[i2-1][i1])
+		-0.0797526041667f*(txz[i2+1][i1]-txz[i2-2][i1])
+		+0.0095703125000f*(txz[i2+2][i1]-txz[i2-3][i1])
+		-0.0006975446429f*(txz[i2+3][i1]-txz[i2-4][i1]);
+	    diff3 = 1.1962890625000f*(txx[i2][i1]-txx[i2-1][i1])
+		-0.0797526041667f*(txx[i2+1][i1]-txx[i2-2][i1])
+		+0.0095703125000f*(txx[i2+2][i1]-txx[i2-3][i1])
+		-0.0006975446429f*(txx[i2+3][i1]-txx[i2-4][i1]);
+	    diff4 = 1.1962890625000f*(txz[i2][i1]-txz[i2][i1-1])
+		-0.0797526041667f*(txz[i2][i1+1]-txz[i2][i1-2])
+		+0.0095703125000f*(txz[i2][i1+2]-txz[i2][i1-3])
+		-0.0006975446429f*(txz[i2][i1+3]-txz[i2][i1-4]);
+	    uvz[i2][i1]+=dt*rho[i2][i1]*(_dz*diff1+_dx*diff2);
+	    uvx[i2][i1]+=dt*rho[i2][i1]*(_dx*diff3+_dz*diff4);
+	}
+}
+
+
+void forward_txx_tzz_txz(float **uvx, float **uvz, float **txx, float **tzz, float **txz, float **vp, float **vs)
+/*< forward step: update txx, tzz, txz >*/
+{
+    int i1, i2;
+    float diff1, diff2, diff3, diff4;
+
+#ifdef _OPENMP
+#pragma omp parallel for default(none)				\
+    private(i1,i2,diff1,diff2,diff3,diff4)			\
+    shared(uvx,uvz,txx,tzz,txz,vp,vs,nxpad,nzpad,dt,_dx,_dz)
+#endif
+    for(i2=3; i2<nxpad-4; i2++)
+	for(i1=3; i1<nzpad-4; i1++)
+	{
+	    diff1 = 1.1962890625000f*(uvz[i2][i1+1]-uvz[i2][i1])
+		-0.0797526041667f*(uvz[i2][i1+2]-uvz[i2][i1-1])
+		+0.0095703125000f*(uvz[i2][i1+3]-uvz[i2][i1-2])
+		-0.0006975446429f*(uvz[i2][i1+4]-uvz[i2][i1-3]);
+	    diff2 = 1.1962890625000f*(uvx[i2][i1+1]-uvx[i2][i1])
+		-0.0797526041667f*(uvx[i2][i1+2]-uvx[i2][i1-1])
+		+0.0095703125000f*(uvx[i2][i1+3]-uvx[i2][i1-2])
+		-0.0006975446429f*(uvx[i2][i1+4]-uvx[i2][i1-3]);
+	    diff3 = 1.1962890625000f*(uvz[i2+1][i1]-uvz[i2][i1])
+		-0.0797526041667f*(uvz[i2+2][i1]-uvz[i2-1][i1])
+		+0.0095703125000f*(uvz[i2+3][i1]-uvz[i2-2][i1])
+		-0.0006975446429f*(uvz[i2+4][i1]-uvz[i2-3][i1]);
+	    diff4 = 1.1962890625000f*(uvx[i2+1][i1]-uvx[i2][i1])
+		-0.0797526041667f*(uvx[i2+2][i1]-uvx[i2-1][i1])
+		+0.0095703125000f*(uvx[i2+3][i1]-uvx[i2-2][i1])
+		-0.0006975446429f*(uvx[i2+4][i1]-uvx[i2-3][i1]);
+	    txx[i2][i1]+=dt*(vp[i2][i1]*_dx*diff4+(vp[i2][i1]-2*vs[i2][i1])*_dz*diff1);
+	    tzz[i2][i1]+=dt*(vp[i2][i1]*_dz*diff1+(vp[i2][i1]-2*vs[i2][i1])*_dx*diff4);
+	    txz[i2][i1]+=dt*vs[i2][i1]*(_dz*diff2+_dx*diff3);
+	}
+}
+
+
+void apply_sponge(float **u, float *bndr)
+/*< apply absorbing boundary condition >*/
+{
+    int ix,iz;
+
+#ifdef _OPENMP
+#pragma omp parallel for			\
+    private(ix,iz)				\
+    shared(bndr,u)
+#endif
+    for(ix=0; ix<nxpad; ix++)
+    {
+	for(iz=0;iz<nb;iz++){	// top ABC			
+	    u[ix][iz]=bndr[iz]*u[ix][iz];
+	}
+	for(iz=nz+nb;iz<nzpad;iz++){// bottom ABC			
+	    u[ix][iz]=bndr[nzpad-iz-1]*u[ix][iz];
+	}
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel for			\
+    private(ix,iz)				\
+    shared(bndr,u)
+#endif
+    for(iz=0; iz<nzpad; iz++)
+    {
+	for(ix=0;ix<nb;ix++){	// left ABC			
+	    u[ix][iz]=bndr[ix]*u[ix][iz];
+	}	
+	for(ix=nx+nb;ix<nxpad;ix++){// right ABC			
+	    u[ix][iz]=bndr[nxpad-ix-1]*u[ix][iz];
+	}	
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    bool verb;
+    int jt, ft, kt, it, ib, ix, iz, sx, sz, sxs, dxs, szs, dzs, isx, isz, nxf, nzf;
+    int nsz, nsx;
+    float a, amp, *wlt, *bndr, start_time;
+    float sszf_curr, eszf_curr, ssxf_curr, esxf_curr;
+    float **ssxf, **sszf, **esxf, **eszf;
+    float **vp0, **vs0, **rho0, **vp, **vs, **rho, **uvx, **uvz, **txx, **tzz, **txz;
+
+    float **vp0_init, **vs0_init, **rho0_init;
+
+    sf_file Fvp, Fvs, Frho, Fsszf, Feszf, Fssxf, Fesxf, Fwavx, Fwavz;
+    
+    sf_init(argc,argv);
+#ifdef _OPENMP
+    omp_init();
+#endif
+
+    Fvp = sf_input("in");/* p-wave veloctiy */
+    Fvs = sf_input("vs");/* s-wave veloctiy */
+    Frho = sf_input("rho");/* density */
+    Fsszf = sf_input("sszf");
+    Feszf = sf_input("eszf");
+    Fssxf = sf_input("ssxf");
+    Fesxf = sf_input("esxf");
+
+    Fwavz = sf_output("out");/* z-component of wavefield */
+    Fwavx = sf_output("wavx");/* x-component of wavefield */
+
+    if(!sf_getbool("verb",&verb)) verb=false;    /* verbosity */
+    if (!sf_histint(Fvp,"n1",&nz)) sf_error("No n1= in input");/* veloctiy model: nz */
+    if (!sf_histint(Fvp,"n2",&nx)) sf_error("No n2= in input");/* veloctiy model: nx */
+    if (!sf_histfloat(Fvp,"d1",&dz)) sf_error("No d1= in input");/* veloctiy model: dz */
+    if (!sf_histfloat(Fvp,"d2",&dx)) sf_error("No d2= in input");/* veloctiy model: dx */
+    if(!sf_histint(Fsszf, "n1", &nsz)) sf_error("No nsz in input");
+    if(!sf_histint(Fsszf, "n2", &nsx)) sf_error("No nsx in input");
+
+    if (!sf_getint("nb",&nb)) nb=30; /* thickness of PML boundary */
+    if (!sf_getint("nzf",&nzf)) nzf = 1;
+    if (!sf_getint("nxf", &nxf)) nxf = 1;
+    if (!sf_getint("nt",&nt)) sf_error("nt required");/* number of time steps */
+    if (!sf_getint("kt",&kt)) sf_error("kt required");/* record wavefield at time kt */
+    if (kt>nt) sf_error("make sure kt<=nt");
+    if (!sf_getfloat("dt",&dt)) sf_error("dt required");/* time sampling interval */
+    if (!sf_getfloat("fm",&fm)) fm=20.0; /*dominant freq of Rƒnxicker wavelet */
+    if (!sf_getint("ft",&ft)) ft=0; /* first recorded time */
+    if (!sf_getint("jt",&jt)) jt=1;	/* time interval */
+    if (!sf_getfloat("amp", &amp)) amp=1.0;
+
+    if( verb ) start_time = clock();
+    else start_time = 0.0;
+
+    //put appropriate dimension sizes
+    sf_putint(Fwavz, "n1", nx);
+    sf_putint(Fwavz, "n2", nt);
+    sf_putint(Fwavx, "n1", nx);
+    sf_putint(Fwavx, "n2", nt);
+    sf_putint(Fwavz, "n3", nsz*nsx);
+    sf_putint(Fwavx, "n3", nsz*nsx);
+
+    //add dt to wavz, wavx
+    sf_putfloat(Fwavz, "d1", dx);
+    sf_putfloat(Fwavx, "d1", dx);
+    sf_putfloat(Fwavz, "d2", dt);
+    sf_putfloat(Fwavx, "d2", dt);
+    sf_putfloat(Fwavz, "d3", 1.0);
+    sf_putfloat(Fwavx, "d3", 1.0);
+
+    // fprintf(stderr, "(YOnz,nx,nt) = (%d,%d,%d)\n", nz, nx, nt);
+    
+    nzpad=nz+2*nb;
+    nxpad=nx+2*nb;	
+    _dz=1.0/dz;
+    _dx=1.0/dx;
+ 
+    // fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
+
+    /* allocate memory for variables */
+    wlt=sf_floatalloc(nt);
+    bndr=sf_floatalloc(nb);
+    vp0=sf_floatalloc2(nz,nx); 
+    vs0=sf_floatalloc2(nz,nx); 
+    rho0=sf_floatalloc2(nz,nx);
+    vp=sf_floatalloc2(nzpad, nxpad);
+    vs=sf_floatalloc2(nzpad, nxpad);
+    rho=sf_floatalloc2(nzpad, nxpad);
+    uvx=sf_floatalloc2(nzpad, nxpad);
+    uvz=sf_floatalloc2(nzpad, nxpad);
+    txx=sf_floatalloc2(nzpad, nxpad);
+    tzz=sf_floatalloc2(nzpad, nxpad);
+    txz=sf_floatalloc2(nzpad, nxpad);
+
+    sszf=sf_floatalloc2(nsz, nsx);
+    eszf=sf_floatalloc2(nsz, nsx);
+    ssxf=sf_floatalloc2(nsz, nsx);
+    esxf=sf_floatalloc2(nsz, nsx);
+
+    vp0_init=sf_floatalloc2(nz,nx);
+    vs0_init=sf_floatalloc2(nz,nx);
+    rho0_init=sf_floatalloc2(nz,nx);
+
+    sf_floatread(vp0_init[0], nz*nx, Fvp);
+    sf_floatread(vs0_init[0], nz*nx, Fvs);
+    sf_floatread(rho0_init[0], nz*nx, Frho);
+
+    sf_floatread(sszf[0], nsz*nsx, Fsszf);
+    sf_floatread(eszf[0], nsz*nsx, Feszf);
+    sf_floatread(ssxf[0], nsz*nsx, Fssxf);
+    sf_floatread(esxf[0], nsz*nsx, Fesxf);
+
+
+int jzs, jxs;
+for(jxs = 0; jxs < nsx; jxs++){
+for(jzs = 0; jzs < nsz; jzs++){
+    sszf_curr = sszf[jzs][jxs];
+    eszf_curr = eszf[jzs][jxs];
+    ssxf_curr = ssxf[jzs][jxs];
+    esxf_curr = esxf[jzs][jxs];
+
+    szs = nb + (int) ( ((float) nz) * sszf_curr );
+    sxs = nb + (int) ( ((float) nx) * ssxf_curr );
+ 
+    fprintf(stderr, "(%d,%d,%f,%f,%f,%f)\n", szs, sxs, sszf_curr,
+        eszf_curr, ssxf_curr, esxf_curr);
+
+    if( nzf == 1 ) dzs = 0.0;
+    else dzs = (int)
+        ( ((float) nz) * (eszf_curr - sszf_curr) / (float) (nzf-1) );
+
+    if( nxf == 1 ) dxs = 0.0;
+    else dxs = (int) 
+        ( ((float) nx) * (esxf_curr - ssxf_curr) / (float) (nxf - 1) );
+
+    /* initialization */
+    for(it=0;it<nt;it++)
+    {
+	a=SF_PI*fm*(it*dt-1.0/fm);a*=a;
+	wlt[it]=amp*(1.0-2.0*a)*expf(-a);
+    }
+    for(ib=0;ib<nb;ib++)
+    {
+	a=0.015*(nb-ib);
+	bndr[ib]=expf(-a*a);
+    }
+    for(ix=0; ix<nx; ix++)
+	for(iz=0; iz<nz; iz++)
+	{
+            //pay close attention to the indices! --> this may be causing
+            //    subtle bugs
+	    vp0[ix][iz]=rho0_init[ix][iz]*vp0_init[ix][iz]*vp0_init[ix][iz];
+	    vs0[ix][iz]=rho0_init[ix][iz]*vs0_init[ix][iz]*vs0_init[ix][iz];
+	    rho0[ix][iz]=1.0/rho0_init[ix][iz];
+	}
+    expand2d(vp, vp0);
+    expand2d(vs, vs0);
+    expand2d(rho, rho0);
+    memset(uvx[0],0,nzpad*nxpad*sizeof(float));
+    memset(uvz[0],0,nzpad*nxpad*sizeof(float));
+    memset(txx[0],0,nzpad*nxpad*sizeof(float));
+    memset(tzz[0],0,nzpad*nxpad*sizeof(float));
+    memset(txz[0],0,nzpad*nxpad*sizeof(float));
+
+
+    for(it=0; it<nt; it++)
+    {
+        for(isx = 0; isx < nxf; isx++){
+            for(isz = 0; isz < nzf; isz++ ){
+                sx =  sxs + isx * dxs;
+                sz = szs + isz * dzs;
+                if( sx < nb ) { fprintf(stderr, "<x (ssxf, sx) = (%f, %d\n", ssxf_curr, sx); sx = 0; }
+                if( sx > nb + nx - 1 ) { fprintf(stderr, ">x (ssxf, sx)=(%f,%d\n", ssxf_curr, sx); sx = nx - 1; }
+                if( sz < nb ) { fprintf(stderr, "<z (sszf, sz)=(%f, %d)\n", sszf_curr, sz); sz = 0; }
+                if( sz > nb + nz - 1 ) { fprintf(stderr, ">z (nb, nz, nz*sszf, sszf,  sz)=(%d, %d, %f, %f, %d)\n", nb, nz, nz * sszf_curr, sszf_curr,sz); sz = nz - 1; }
+                txx[sx][sz]+=wlt[it];
+	            tzz[sx][sz]+=wlt[it];
+            }
+
+        }
+
+
+	forward_uvx_uvz(uvx, uvz, txx, tzz, txz, rho);
+	forward_txx_tzz_txz(uvx, uvz, txx, tzz, txz, vp, vs);
+
+	apply_sponge(uvz, bndr);
+	apply_sponge(uvx, bndr);
+	apply_sponge(tzz, bndr);
+	apply_sponge(txx, bndr);
+	apply_sponge(txz, bndr);
+
+    if(it >= 0)
+	{
+	    window2d(vp0, uvx);
+	    window2d(vs0, uvz);
+
+            float *tmp_p, *tmp_s;
+            tmp_p = sf_floatalloc(nx);
+            tmp_s = sf_floatalloc(nx);
+            int i_write;
+            for(i_write = 0; i_write < nx; i_write++){
+                tmp_p[i_write] = vp0[i_write][0];
+                tmp_s[i_write] = vs0[i_write][0];
+            }
+            
+	    sf_floatwrite(tmp_p, nx, Fwavx);
+	    sf_floatwrite(tmp_s, nx, Fwavz);
+            int k = 0;
+/*            for(k = 0; k < nx; k++) {
+                fprintf(stderr, "k,p,s=%d,%.4f,%.4f\n", k, tmp_p[k],
+                    tmp_s[k]); 
+            }*/
+	}
+	//if (verb) sf_warning("%d of %d;", it, nt);
+    }
+
+    if( verb ) {
+        fprintf(stderr, "Execution time: %.2f minutes\n", 
+            (clock() - start_time) / (60.0 * CLOCKS_PER_SEC));
+    }
+}
+}
+    free(wlt);
+    free(bndr);
+    free(*vp0); free(vp0);
+    free(*vs0); free(vs0);
+    free(*rho0); free(rho0);
+    free(*vp); free(vp);
+    free(*vs); free(vs);
+    free(*rho); free(rho);
+    free(*uvx); free(uvx);
+    free(*uvz); free(uvz);
+    free(*txx); free(txx);
+    free(*tzz); free(tzz);
+    free(*txz); free(txz);
+
+    exit(0);
+}
+

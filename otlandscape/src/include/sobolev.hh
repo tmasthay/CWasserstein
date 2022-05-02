@@ -84,13 +84,19 @@ public:
         assert( m.size() == nx * nt );
         T total_sum = 0.0;
         if( s_tilde == 0.0 ){
+            for(int i = 0; i < m.size(); i++){
+                T diff = m[i] - this->data[i];
+                total_sum = total_sum + diff*diff;
+//                cerr << diff*diff << " " << total_sum << endl;
+            }
+            /*
             for(int ix = 0; ix < nx; ix++){
                 for(int it = 0; it < nt; it++){
                     T diff = m[it + ix*nt] - data[it + ix*nt];
                     //cerr << "diff^2 = " << diff*diff << endl;
                     total_sum += diff*diff*dx*dt;
                 }
-            }
+            }*/
         }
         else{
             for(int ix = 0; ix < nx; ix++){
@@ -108,8 +114,10 @@ public:
     //implement virtual evaluation function -- workhorse function
     T eval(const valarray<T> &m){
         valarray<T> m2 = m;
-        renormalization(m2);
-        return eval(m2, this->s);
+        if( abs(this->s) > 0 ) renormalization(m2);
+        T value = eval(m2, this->s);
+        cerr << "value=" << value << endl;
+        return value;
     }
 };
 

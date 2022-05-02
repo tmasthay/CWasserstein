@@ -154,14 +154,7 @@ public:
                //    d_q once! --> come back to this.
                valarray<T> f_q(quantile(cdf(m_trace)));
                valarray<T> d_q(quantile(cdf(d_trace)));
-                
-               //print some info for debugging -- superfluous
-               for(int i_p = 0; i_p < np; i_p++){
-//                   cout << "(" << f_q[i_p]) < "," << d_q[i_p]) << ")" << endl;
-                   cout << "(" << p[i_p] << "," << f_q[i_p] << ", " << 
-                       d_q[i_p] << ")" << endl;
-               }
- 
+                 
                //perform sanity checks
                assert( f_q.size() == np );
                //assert( d_q.size() == np );
