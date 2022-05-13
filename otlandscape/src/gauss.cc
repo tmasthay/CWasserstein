@@ -20,6 +20,7 @@ int main(int argc, char* argv[]){
     CUB t("t", "i"); t.headin(); //t.report();
     CUB p("p", "i"); p.headin(); //p.report();
 
+    cerr << "yo\n";
     int verbose;
     if(!sf_getint("v", &verbose)) verbose = 0; 
     //get mode of execution

@@ -23,9 +23,9 @@ proj.Replace(CCFLAGS=cflags)
 gauss = proj.Program('gauss.cc')
 gauss_exe = str(gauss[0])
 
-o = [-10.0, -3, 1.0]
-e = [10.0, 3, 3.0]
-n = [200.0, 10, 10]
+o = [-10.0, -3, 1.0, 0.0]
+e = [10.0, 3, 3.0, 1.0]
+n = [200.0, 10, 10, 1000]
 
 shift_mid = int(n[1] / 2)
 var_mid = int(n[2] / 2)
@@ -39,5 +39,26 @@ Flow('data', None,
     '''%(o[0], n[0], (e[0]-o[0]) / (0.0+n[0]),
          o[1], n[1], (e[1]-o[1]) / (0.0+n[1]),
          o[2], n[2], (e[2]-o[2]) / (0.0+n[2])))
+
+Flow('ref', 'data', 'window n2=1 n3=1 f2=%d f3=%d'%(shift_mid, var_mid))
+
+Flow('t', None, 
+    '''
+    math output="x1" o1=%.8f n1=%d d1=%.8f
+    '''%(o[0], n[0], (e[0]-o[0]) / (0.0+n[0])))
+
+Flow('p', None, 
+    '''
+    math output="x1" o1=%.8f n1=%d d1=%.8f
+    '''%(o[3], n[3], (e[3]-o[3]) / (0.0+n[3])))
+
+Flow('guess', 'data ref t p %s'%gauss_exe,
+    '''
+    ./${SOURCES[4]}
+        data=${SOURCES[1]} 
+        t=${SOURCES[2]} 
+        p=${SOURCES[3]} 
+        mode=1
+    ''')
 
 proj.End()
