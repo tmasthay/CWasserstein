@@ -8,6 +8,7 @@ from forward import forward
 import base
 from helper import *
 import os
+
 proj = Project()
 
 #define libs and cflags
@@ -19,85 +20,24 @@ proj.Prepend(LIBS=libs)
 proj.Replace(CCFLAGS=cflags)
 
 #compile programs
-#elas = proj.Program('./include/myelastic.cc')
-#elas = proj.Program('./include/elastictop.c')
-elas = proj.Program('./include/elastictopstack.c')
-driv = proj.Program('driver.cc')
-wass_exe = str(driv[0])
+gauss = proj.Program('gauss.cc')
+gauss_exe = str(gauss[0])
 
-modes = ['sobolev', 'w2linexp', 'w2square', 'w2exp', 'w2linear']
+o = [-10.0, -3, 1.0]
+e = [10.0, 3, 3.0]
+n = [200.0, 10, 10]
 
-mode_nos = [get_mode(m) for m in modes]
+shift_mid = int(n[1] / 2)
+var_mid = int(n[2] / 2)
 
-ps = [{'s': 0.0}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
-
-#add other param for setting nz,nx simultaneously
-n_all = 25
-
-#create z for convexity
-z = [0.2, 0.8, n_all]
-
-#create x for convexity
-x = [0.2, 0.8, n_all]
-
-#define probability space granularity
-np_factor = 10.0
-create_synthetic_data(z, x, modes, ps, np_factor)
-
-wc = lambda m : '''
-    ./${SOURCES[4]} 
-    data=${SOURCES[1]} 
-    t=${SOURCES[2]} 
-    p=${SOURCES[3]}
-    bz=%.4f
-    ez=%.4f
-    bx=%.4f
-    ex=%.4f
-    zs=%d
-    xs=%d
-    mode=%s
-    '''%(z[0], z[1], x[0], x[1], z[2], x[2], m)
-
-all_colors = '''cubeyf1 gist_earth izoaz linearlfb lb montag owb rwb seismic spectral
- viridis acton bamako batlow berlin bilbao broc brocO buda cork corkO 
- davos devon grayC hawaii imola inferno lajolla lapaz lisbon magma nuuk 
- oleron oslo plasma roma romaO tofino tokyo turku vik vikO'''.split(' ')
-
-clr=''
-
-plot_cmd_tmp = 'grey color=%s scalebar=y label1=Zshift label2=Xshift'%clr
-plot_cmd_tmp = plot_cmd_tmp + ' maxval=1.0'
-plot_cmd = lambda x : plot_cmd_tmp + ' title="%s"'%(x)
-
-wavz_syn = 'wavz_synthetic'
-wavx_syn = 'wavx_synthetic'
-wavz_syn_fourier = wavz_syn + 'fft'
-wavx_syn_fourier = wavx_syn + 'fft'
-
-create_fft_plots = True
-create_plots = True
-
-for (i,mode) in enumerate(modes):
-    cmd = wc(mode_nos[i]) + ' ' + dict_to_str(ps[i])
-    cmd = cmd[:-1]
-    p_cmd = plot_cmd(mode + ' ' + dict_to_str(ps[i]))
-    if( mode == 'sobolev' and abs(ps[i]['s']) > 0 ):
-        print('Nonzero sobolev norms not supported yet...coming soon')
-    elif( 'w2' in mode or abs(ps[i]['s']) == 0.0 ):
-        Flow('distz_%d'%i, 'wavz_shifted %s t p %s'%(wavz_syn, wass_exe), cmd)
-        Flow('distx_%d'%i, 'wavx_shifted %s t p %s'%(wavx_syn, wass_exe), cmd)
-        if( create_plots ):
-            Result('wavz_shifted', 'wavz_shifted', 
-                '''
-                transp plane=12 | 
-                grey title="Time observations" label1=X label2=Time
-                    unit1=km unit2=s 
-                    color=%s'''%clr)
-            create_plots = False
-    Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
-    Result('fulldist_%d'%i, 'fulldist_%d'%i, 
-        p_cmd)
-
-ricker_shift(wass_exe)
+Flow('data', None,
+    '''
+    math output="exp(-(x1 - x2)*(x1-x2) / (2.0 * x3 * x3))"
+        o1=%d n1=%d d1=%.8f
+        o2=%d n2=%d d2=%.8f
+        o3=%d n3=%d d3=%.8f
+    '''%(o[0], n[0], (e[0]-o[0]) / (0.0+n[0]),
+         o[1], n[1], (e[1]-o[1]) / (0.0+n[1]),
+         o[2], n[2], (e[2]-o[2]) / (0.0+n[2])))
 
 proj.End()
