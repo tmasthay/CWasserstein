@@ -23,12 +23,18 @@ proj.Replace(CCFLAGS=cflags)
 gauss = proj.Program('gauss.cc')
 gauss_exe = str(gauss[0])
 
-o = [-10.0, -3, 1.0, 0.0]
-e = [10.0, 3, 3.0, 1.0]
-n = [200.0, 10, 10, 1000]
+o = [-20.0, -3, 1.0, 0.0]
+e = [20.0, 3, 3.0, 1.0]
+n = [200.0, 1000, 1000, 100]
 
 shift_mid = int(n[1] / 2)
 var_mid = int(n[2] / 2)
+
+shift = np.linspace(o[1], e[1], n[1])
+var = np.linspace(o[2], e[2], n[2])
+
+shift_ref = shift[shift_mid]
+var_ref = var[var_mid]
 
 Flow('data', None,
     '''
@@ -61,4 +67,23 @@ Flow('guess', 'data ref t p %s'%gauss_exe,
         mode=1
     ''')
 
+Result('guess', 'guess', 'grey title="W2 landscape" scalebar=y')
+
+Flow('analytic', None, 
+    '''
+    math output="(x1-%.8f)*(x1-%.8f) + (x2-%.8f)*(x2-%.8f)"
+        o1=%.8f n1=%d d1=%.8f
+        o2=%.8f n2=%d d2=%.8f |
+    put label1="Time Shift" unit1="s" label2="Stddev" unit2="s"
+    '''%(shift_ref, shift_ref, var_ref, var_ref,
+        o[1], n[1], (e[1] - o[1]) / (0.0+n[1]),
+        o[2], n[2], (e[2] - o[2]) / (0.0+n[2])))
+
+Result('analytic', 'analytic', 
+    '''
+    grey title="Analytic landscape" scalebar=y
+    ''')
+
+Flow('diff', 'analytic guess', 'math output="abs(input-y)" y=${SOURCES[1]}')
+Result('diff', 'diff', 'grey title="Difference" color=seismic scalebar=y')
 proj.End()

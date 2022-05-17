@@ -59,6 +59,18 @@ int main(int argc, char* argv[]){
     output_file = sf_output("out");
     sf_putint(output_file, "n1", nx);
     sf_putint(output_file, "n2", n_cases);
+    sf_putint(output_file, "n3", 1);
+
+    sf_putfloat(output_file, "d1", dx);
+    sf_putfloat(output_file, "d2", dc);
+
+    sf_putfloat(output_file, "o1", sf_o(fa1));
+    sf_putfloat(output_file, "o2", sf_o(fa2));
+
+    sf_putstring(output_file, "label1", "Time Shift");
+    sf_putstring(output_file, "label2", "Stddev");
+    sf_putstring(output_file, "unit1", "s");
+    sf_putstring(output_file, "unit2", "s");
 
     //read in reference data
     valarray<float> g_vec(0.0, nt); g >> g_vec;
