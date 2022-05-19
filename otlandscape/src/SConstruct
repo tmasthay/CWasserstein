@@ -25,22 +25,22 @@ elas = proj.Program('./include/elastictopstack.c')
 driv = proj.Program('driver.cc')
 wass_exe = str(driv[0])
 
-modes = ['sobolev', 'w2linexp', 'w2square', 'w2exp', 'w2linear']
+modes = ['sobolev', 'w2split', 'w2linexp', 'w2square', 'w2exp', 'w2linear']
 
 mode_nos = [get_mode(m) for m in modes]
 
-ps = [{'s': 0.0}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
+ps = [{'s': 0.0}, {}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
 
 #add other param for setting nz,nx simultaneously
-n_all_z = 25
-n_all_x = 1
+n_all_z = 10
+n_all_x = 10
 
 #create z for convexity
 z = [0.2, 0.8, n_all_z]
 
 #create x for convexity
 #x = [0.2, 0.8, n_all]
-x = [0.5, 0.5, n_all_x]
+x = [0.2, 0.8, n_all_x]
 
 #define probability space granularity
 np_factor = 10.0
@@ -82,7 +82,10 @@ create_plots = True
 for (i,mode) in enumerate(modes):
     cmd = wc(mode_nos[i]) + ' ' + dict_to_str(ps[i])
     cmd = cmd[:-1]
-    p_cmd = plot_cmd(mode + ' ' + dict_to_str(ps[i]))
+    mode_title = mode + ' ' + dict_to_str(ps[i])
+    if( mode == 'sobolev' and ps[i]['s'] == 0.0 ):
+        mode_title = 'L2'
+    p_cmd = plot_cmd(mode_title)
     if( mode == 'sobolev' and abs(ps[i]['s']) > 0 ):
         print('Nonzero sobolev norms not supported yet...coming soon')
     elif( 'w2' in mode or abs(ps[i]['s']) == 0.0 ):
@@ -97,6 +100,29 @@ for (i,mode) in enumerate(modes):
                     color=%s'''%clr)
             create_plots = False
     Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
+    Flow('zconvex_%d'%i, 'fulldist_%d'%i, 
+        '''
+        window f2=0 n2=1 
+        ''')
+    Flow('xconvex_%d'%i, 'fulldist_%d'%i,
+        '''
+        window f1=%d n1=1 
+        '''%(int(n_all_z / 2)))
+
+    Result('zconvex_%d'%i, 'zconvex_%d'%i, 'graph title="Z Convexity Test"')
+    Result('xconvex_%d'%i, 'xconvex_%d'%i, 'graph title="X Convexity Test"')
+    Result('fullgraphz_%d'%i, 'fulldist_%d'%i, 
+        '''
+        transp plane=23 |
+        graph title="%s" label1=Depth label2=Misfit
+        '''%mode_title )
+
+    Result('fullgraphx_%d'%i, 'fulldist_%d'%i, 
+        '''
+        transp plane=13 | 
+        transp plane=12 | 
+        graph title="%s" label1=X label2=Misfit
+        '''%mode_title)
     Result('fulldist_%d'%i, 'fulldist_%d'%i, 
         p_cmd)
 
