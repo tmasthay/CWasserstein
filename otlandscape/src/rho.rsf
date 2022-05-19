@@ -1,4 +1,4 @@
-3.2-git	sfmath	repo_holder/otlandscape/src:	tyler@lambert	Mon May  2 15:56:45 2022
+3.2-git	sfmath	CWasserstein/otlandscape/src:	tyler@lambert	Thu May 19 16:05:57 2022
 
 	x2=1
 	d2=7
@@ -7,7 +7,7 @@
 	o2=0
 	data_format="native_float"
 	esize=4
-	in="/var/tmp/repo_holder/otlandscape/src/rho.rsf@"
+	in="/var/tmp/CWasserstein/otlandscape/src/rho.rsf@"
 	x1=0
 	d1=4
 	n1=200

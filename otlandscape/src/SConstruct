@@ -32,7 +32,7 @@ mode_nos = [get_mode(m) for m in modes]
 ps = [{'s': 0.0}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
 
 #add other param for setting nz,nx simultaneously
-n_all = 25
+n_all = 5
 
 #create z for convexity
 z = [0.2, 0.8, n_all]
