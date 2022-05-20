@@ -32,8 +32,8 @@ mode_nos = [get_mode(m) for m in modes]
 ps = [{'s': 0.0}, {}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
 
 #add other param for setting nz,nx simultaneously
-n_all_z = 10
-n_all_x = 10
+n_all_z = 50
+n_all_x = 50
 
 #create z for convexity
 z = [0.2, 0.8, n_all_z]
@@ -65,10 +65,10 @@ all_colors = '''cubeyf1 gist_earth izoaz linearlfb lb montag owb rwb seismic spe
  davos devon grayC hawaii imola inferno lajolla lapaz lisbon magma nuuk 
  oleron oslo plasma roma romaO tofino tokyo turku vik vikO'''.split(' ')
 
-clr=''
+clr='seismic'
 
 plot_cmd_tmp = 'grey color=%s scalebar=y label1=Zshift label2=Xshift'%clr
-plot_cmd_tmp = plot_cmd_tmp + ' maxval=1.0'
+#plot_cmd_tmp = plot_cmd_tmp + ' maxval=1.0'
 plot_cmd = lambda x : plot_cmd_tmp + ' title="%s"'%(x)
 
 wavz_syn = 'wavz_synthetic'
