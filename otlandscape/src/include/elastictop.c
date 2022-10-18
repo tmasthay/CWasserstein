@@ -15,6 +15,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include <rsf.h>
+#include <time.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -186,7 +187,7 @@ int main(int argc, char* argv[])
 {
     bool verb;
     int jt, ft, kt, it, ib, ix, iz, sx, sz, sxs, dxs, szs, dzs, isx, isz, nxf, nzf;
-    float a, ssxf, sszf, esxf, eszf, amp, *wlt, *bndr;
+    float a, ssxf, sszf, esxf, eszf, amp, *wlt, *bndr, start_time;
     float **vp0, **vs0, **rho0, **vp, **vs, **rho, **uvx, **uvz, **txx, **tzz, **txz;
 
     sf_file Fvp, Fvs, Frho, Fwavx, Fwavz;
@@ -223,17 +224,20 @@ int main(int argc, char* argv[])
     if (!sf_getint("nzf", &nzf)) nzf = 2; /* number of sources in z direction */
     if (!sf_getfloat("amp", &amp)) amp=1.0;
 
+    if( verb ) start_time = clock();
+    else start_time = 0.0;
+
     //put appropriate dimension sizes
-    sf_putint(Fwavz, "n1", nz);
-    sf_putint(Fwavz, "n2", nx);
-    sf_putint(Fwavz, "n3", nt);
-    sf_putint(Fwavx, "n1", nz);
-    sf_putint(Fwavx, "n2", nx);
-    sf_putint(Fwavx, "n3", nt);
+    sf_putint(Fwavz, "n1", nx);
+    sf_putint(Fwavz, "n2", nt);
+    sf_putint(Fwavx, "n1", nx);
+    sf_putint(Fwavx, "n2", nt);
 
     //add dt to wavz, wavx
-    sf_putfloat(Fwavz, "d3", dt);
-    sf_putfloat(Fwavx, "d3", dt);
+    sf_putfloat(Fwavz, "d1", dx);
+    sf_putfloat(Fwavx, "d1", dx);
+    sf_putfloat(Fwavz, "d2", dt);
+    sf_putfloat(Fwavx, "d2", dt);
 
     // fprintf(stderr, "(YOnz,nx,nt) = (%d,%d,%d)\n", nz, nx, nt);
     
@@ -323,12 +327,26 @@ int main(int argc, char* argv[])
     if(it >= 0)
 	{
 	    window2d(vp0, uvx);
-	    sf_floatwrite(vp0[0], nz*nx, Fwavx);
-
 	    window2d(vs0, uvz);
-	    sf_floatwrite(vs0[0], nz*nx, Fwavz);
+
+            float *tmp_p, *tmp_s;
+            tmp_p = sf_floatalloc(nx);
+            tmp_s = sf_floatalloc(nx);
+            int i_write;
+            for(i_write = 0; i_write < nx; i_write++){
+                tmp_p[i_write] = vp0[i_write][0];
+                tmp_s[i_write] = vs0[i_write][0];
+            }
+            
+	    sf_floatwrite(tmp_p, nx, Fwavx);
+	    sf_floatwrite(tmp_s, nx, Fwavz);
 	}
-	if (verb) sf_warning("%d of %d;", it, nt);
+	//if (verb) sf_warning("%d of %d;", it, nt);
+    }
+
+    if( verb ) {
+        fprintf(stderr, "Execution time: %.2f minutes\n", 
+            (clock() - start_time) / (60.0 * CLOCKS_PER_SEC));
     }
 
     free(wlt);

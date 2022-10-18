@@ -15,6 +15,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include <rsf.h>
+#include <time.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -186,10 +187,15 @@ int main(int argc, char* argv[])
 {
     bool verb;
     int jt, ft, kt, it, ib, ix, iz, sx, sz, sxs, dxs, szs, dzs, isx, isz, nxf, nzf;
-    float a, ssxf, sszf, esxf, eszf, amp, *wlt, *bndr;
+    int nsz, nsx;
+    float a, amp, *wlt, *bndr, start_time;
+    float sszf_curr, eszf_curr, ssxf_curr, esxf_curr;
+    float **ssxf, **sszf, **esxf, **eszf;
     float **vp0, **vs0, **rho0, **vp, **vs, **rho, **uvx, **uvz, **txx, **tzz, **txz;
 
-    sf_file Fvp, Fvs, Frho, Fwavx, Fwavz;
+    float **vp0_init, **vs0_init, **rho0_init;
+
+    sf_file Fvp, Fvs, Frho, Fsszf, Feszf, Fssxf, Fesxf, Fwavx, Fwavz;
     
     sf_init(argc,argv);
 #ifdef _OPENMP
@@ -199,6 +205,11 @@ int main(int argc, char* argv[])
     Fvp = sf_input("in");/* p-wave veloctiy */
     Fvs = sf_input("vs");/* s-wave veloctiy */
     Frho = sf_input("rho");/* density */
+    Fsszf = sf_input("sszf");
+    Feszf = sf_input("eszf");
+    Fssxf = sf_input("ssxf");
+    Fesxf = sf_input("esxf");
+
     Fwavz = sf_output("out");/* z-component of wavefield */
     Fwavx = sf_output("wavx");/* x-component of wavefield */
 
@@ -207,7 +218,12 @@ int main(int argc, char* argv[])
     if (!sf_histint(Fvp,"n2",&nx)) sf_error("No n2= in input");/* veloctiy model: nx */
     if (!sf_histfloat(Fvp,"d1",&dz)) sf_error("No d1= in input");/* veloctiy model: dz */
     if (!sf_histfloat(Fvp,"d2",&dx)) sf_error("No d2= in input");/* veloctiy model: dx */
+    if(!sf_histint(Fsszf, "n1", &nsz)) sf_error("No nsz in input");
+    if(!sf_histint(Fsszf, "n2", &nsx)) sf_error("No nsx in input");
+
     if (!sf_getint("nb",&nb)) nb=30; /* thickness of PML boundary */
+    if (!sf_getint("nzf",&nzf)) nzf = 1;
+    if (!sf_getint("nxf", &nxf)) nxf = 1;
     if (!sf_getint("nt",&nt)) sf_error("nt required");/* number of time steps */
     if (!sf_getint("kt",&kt)) sf_error("kt required");/* record wavefield at time kt */
     if (kt>nt) sf_error("make sure kt<=nt");
@@ -215,25 +231,26 @@ int main(int argc, char* argv[])
     if (!sf_getfloat("fm",&fm)) fm=20.0; /*dominant freq of Rƒnxicker wavelet */
     if (!sf_getint("ft",&ft)) ft=0; /* first recorded time */
     if (!sf_getint("jt",&jt)) jt=1;	/* time interval */
-    if (!sf_getfloat("ssxf",&ssxf)) ssxf=0.25; /* x-source location start */
-    if (!sf_getfloat("esxf", &esxf)) esxf=0.75; /* end x-source locations */
-    if (!sf_getint("nxf", &nxf)) nxf = 2; /* number of sources in x direction */
-    if (!sf_getfloat("sszf",&sszf)) sszf=0.25; /* z-source location */
-    if (!sf_getfloat("eszf", &eszf)) eszf=0.75; /* end of z-source locations */
-    if (!sf_getint("nzf", &nzf)) nzf = 2; /* number of sources in z direction */
     if (!sf_getfloat("amp", &amp)) amp=1.0;
 
+    if( verb ) start_time = clock();
+    else start_time = 0.0;
+
     //put appropriate dimension sizes
-    sf_putint(Fwavz, "n1", nz);
-    sf_putint(Fwavz, "n2", nx);
-    sf_putint(Fwavz, "n3", nt);
-    sf_putint(Fwavx, "n1", nz);
-    sf_putint(Fwavx, "n2", nx);
-    sf_putint(Fwavx, "n3", nt);
+    sf_putint(Fwavz, "n1", nx);
+    sf_putint(Fwavz, "n2", nt);
+    sf_putint(Fwavx, "n1", nx);
+    sf_putint(Fwavx, "n2", nt);
+    sf_putint(Fwavz, "n3", nsz*nsx);
+    sf_putint(Fwavx, "n3", nsz*nsx);
 
     //add dt to wavz, wavx
-    sf_putfloat(Fwavz, "d3", dt);
-    sf_putfloat(Fwavx, "d3", dt);
+    sf_putfloat(Fwavz, "d1", dx);
+    sf_putfloat(Fwavx, "d1", dx);
+    sf_putfloat(Fwavz, "d2", dt);
+    sf_putfloat(Fwavx, "d2", dt);
+    sf_putfloat(Fwavz, "d3", 1.0);
+    sf_putfloat(Fwavx, "d3", 1.0);
 
     // fprintf(stderr, "(YOnz,nx,nt) = (%d,%d,%d)\n", nz, nx, nt);
     
@@ -241,10 +258,6 @@ int main(int argc, char* argv[])
     nxpad=nx+2*nb;	
     _dz=1.0/dz;
     _dx=1.0/dx;
-    sxs = nb + (int) ( ((float) nx) * ssxf );
-    dxs = (int) ( ((float) nx) * (esxf - ssxf) / (float) (nxf - 1) );
-    szs = nb + (int) ( ((float) nz) * sszf );
-    dzs = (int) ( ((float) nz) * (eszf - sszf) / (float) (nzf - 1) );
  
     // fprintf(stderr, "(sxs,dxs,szs,dzs) = (%d,%d,%d,%d)\n", sxs,dxs,szs,dzs);
 
@@ -263,6 +276,47 @@ int main(int argc, char* argv[])
     tzz=sf_floatalloc2(nzpad, nxpad);
     txz=sf_floatalloc2(nzpad, nxpad);
 
+    sszf=sf_floatalloc2(nsz, nsx);
+    eszf=sf_floatalloc2(nsz, nsx);
+    ssxf=sf_floatalloc2(nsz, nsx);
+    esxf=sf_floatalloc2(nsz, nsx);
+
+    vp0_init=sf_floatalloc2(nz,nx);
+    vs0_init=sf_floatalloc2(nz,nx);
+    rho0_init=sf_floatalloc2(nz,nx);
+
+    sf_floatread(vp0_init[0], nz*nx, Fvp);
+    sf_floatread(vs0_init[0], nz*nx, Fvs);
+    sf_floatread(rho0_init[0], nz*nx, Frho);
+
+    sf_floatread(sszf[0], nsz*nsx, Fsszf);
+    sf_floatread(eszf[0], nsz*nsx, Feszf);
+    sf_floatread(ssxf[0], nsz*nsx, Fssxf);
+    sf_floatread(esxf[0], nsz*nsx, Fesxf);
+
+
+int jzs, jxs;
+for(jxs = 0; jxs < nsx; jxs++){
+for(jzs = 0; jzs < nsz; jzs++){
+    sszf_curr = sszf[jzs][jxs];
+    eszf_curr = eszf[jzs][jxs];
+    ssxf_curr = ssxf[jzs][jxs];
+    esxf_curr = esxf[jzs][jxs];
+
+    szs = nb + (int) ( ((float) nz) * sszf_curr );
+    sxs = nb + (int) ( ((float) nx) * ssxf_curr );
+ 
+    fprintf(stderr, "(%d,%d,%f,%f,%f,%f)\n", szs, sxs, sszf_curr,
+        eszf_curr, ssxf_curr, esxf_curr);
+
+    if( nzf == 1 ) dzs = 0.0;
+    else dzs = (int)
+        ( ((float) nz) * (eszf_curr - sszf_curr) / (float) (nzf-1) );
+
+    if( nxf == 1 ) dxs = 0.0;
+    else dxs = (int) 
+        ( ((float) nx) * (esxf_curr - ssxf_curr) / (float) (nxf - 1) );
+
     /* initialization */
     for(it=0;it<nt;it++)
     {
@@ -274,15 +328,14 @@ int main(int argc, char* argv[])
 	a=0.015*(nb-ib);
 	bndr[ib]=expf(-a*a);
     }
-    sf_floatread(vp0[0], nz*nx, Fvp);
-    sf_floatread(vs0[0], nz*nx, Fvs);
-    sf_floatread(rho0[0], nz*nx, Frho);
     for(ix=0; ix<nx; ix++)
 	for(iz=0; iz<nz; iz++)
 	{
-	    vp0[ix][iz]=rho0[ix][iz]*vp0[ix][iz]*vp0[ix][iz];
-	    vs0[ix][iz]=rho0[ix][iz]*vs0[ix][iz]*vs0[ix][iz];
-	    rho0[ix][iz]=1.0/rho0[ix][iz];
+            //pay close attention to the indices! --> this may be causing
+            //    subtle bugs
+	    vp0[ix][iz]=rho0_init[ix][iz]*vp0_init[ix][iz]*vp0_init[ix][iz];
+	    vs0[ix][iz]=rho0_init[ix][iz]*vs0_init[ix][iz]*vs0_init[ix][iz];
+	    rho0[ix][iz]=1.0/rho0_init[ix][iz];
 	}
     expand2d(vp, vp0);
     expand2d(vs, vs0);
@@ -300,10 +353,10 @@ int main(int argc, char* argv[])
             for(isz = 0; isz < nzf; isz++ ){
                 sx =  sxs + isx * dxs;
                 sz = szs + isz * dzs;
-                if( sx < nb ) { fprintf(stderr, "<x (ssxf, sx) = (%f, %d\n", ssxf, sx); sx = 0; }
-                if( sx > nb + nx - 1 ) { fprintf(stderr, ">x (ssxf, sx)=(%f,%d\n", ssxf, sx); sx = nx - 1; }
-                if( sz < nb ) { fprintf(stderr, "<z (sszf, sz)=(%f, %d)\n", sszf, sz); sz = 0; }
-                if( sz > nb + nz - 1 ) { fprintf(stderr, ">z (nb, nz, nz*sszf, sszf,  sz)=(%d, %d, %f, %f, %d)\n", nb, nz, nz * sszf, sszf,sz); sz = nz - 1; }
+                if( sx < nb ) { fprintf(stderr, "<x (ssxf, sx) = (%f, %d\n", ssxf_curr, sx); sx = 0; }
+                if( sx > nb + nx - 1 ) { fprintf(stderr, ">x (ssxf, sx)=(%f,%d\n", ssxf_curr, sx); sx = nx - 1; }
+                if( sz < nb ) { fprintf(stderr, "<z (sszf, sz)=(%f, %d)\n", sszf_curr, sz); sz = 0; }
+                if( sz > nb + nz - 1 ) { fprintf(stderr, ">z (nb, nz, nz*sszf, sszf,  sz)=(%d, %d, %f, %f, %d)\n", nb, nz, nz * sszf_curr, sszf_curr,sz); sz = nz - 1; }
                 txx[sx][sz]+=wlt[it];
 	            tzz[sx][sz]+=wlt[it];
             }
@@ -323,14 +376,34 @@ int main(int argc, char* argv[])
     if(it >= 0)
 	{
 	    window2d(vp0, uvx);
-	    sf_floatwrite(vp0[0], nz*nx, Fwavx);
-
 	    window2d(vs0, uvz);
-	    sf_floatwrite(vs0[0], nz*nx, Fwavz);
+
+            float *tmp_p, *tmp_s;
+            tmp_p = sf_floatalloc(nx);
+            tmp_s = sf_floatalloc(nx);
+            int i_write;
+            for(i_write = 0; i_write < nx; i_write++){
+                tmp_p[i_write] = vp0[i_write][0];
+                tmp_s[i_write] = vs0[i_write][0];
+            }
+            
+	    sf_floatwrite(tmp_p, nx, Fwavx);
+	    sf_floatwrite(tmp_s, nx, Fwavz);
+            int k = 0;
+/*            for(k = 0; k < nx; k++) {
+                fprintf(stderr, "k,p,s=%d,%.4f,%.4f\n", k, tmp_p[k],
+                    tmp_s[k]); 
+            }*/
 	}
-	if (verb) sf_warning("%d of %d;", it, nt);
+	//if (verb) sf_warning("%d of %d;", it, nt);
     }
 
+    if( verb ) {
+        fprintf(stderr, "Execution time: %.2f minutes\n", 
+            (clock() - start_time) / (60.0 * CLOCKS_PER_SEC));
+    }
+}
+}
     free(wlt);
     free(bndr);
     free(*vp0); free(vp0);

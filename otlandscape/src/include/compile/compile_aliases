@@ -1,5 +1,0 @@
-alias ot='cp ot.c compile; cd compile; scons; cp ot.exe ..; cd ..'
-alias el='cp myelastic.c compile; cd compile; scons; cp myelastic.exe ..; cd ..'
-alias sw='cp sw.c compile; cd compile; scons; cp sw.exe ..; cd ..'
-alias go='ot; el; sw; python SConstruct'
-alias g='rm *.exe; rm *.exe; go'
