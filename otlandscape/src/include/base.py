@@ -42,8 +42,8 @@ def create_vp(args):
     layer_vals = cfl * np.array([6.0, 8.0  , 8.5  , 9.3  , 9.8  , 10.0 , 11.0, 11.8])
     layer_ends = [5.0, 250.0, 450.0, 500.0, 520.0, 575.0, 625.0]
 
-#    layer_vals = [2.0]
-#    layer_ends = []
+    layer_vals = [6.0]
+    layer_ends = []
     
     cmd = 'sfmath output="%.8f'%(layer_vals[0])
     for i in range(len(layer_ends)):
@@ -89,8 +89,8 @@ def create_vs(args):
     layer_vals = cfl * np.array([3.75, 4.3, 4.6, 5.0, 5.25, 5.5, 6.0, 6.15, 6.3])
     layer_ends = [5.0, 250.0, 450.0, 500.0, 520.0, 575.0, 625.0]
    
-    #layer_vals = [2.0*0.707]
-    #layer_ends = []
+    layer_vals = [6.0*0.707]
+    layer_ends = []
     cmd = 'sfmath output="%.8f'%(layer_vals[0])
     for i in range(len(layer_ends)):
         cmd += ' + %.8f / (1.0 + exp(-%.8f * (x1 - %.8f)))'%(
@@ -130,7 +130,7 @@ def create_rho(args):
     return the_name, None, cmd
 
 def create_base():
-    N = 200
+    N = 100
       
     az = 0.0
     bz = 700.0 
@@ -150,7 +150,7 @@ def create_base():
     dt = 0.03
 
     amp = 1.0e15
-    snr = 2.0
+    snr = amp
     
     #Check that noise is actually get added properly
     
@@ -177,7 +177,7 @@ def create_base():
             'nsz' :  1,
             'nsx' :  1,
             'nb' : 70,
-            'fm' : 1.0,
+            'fm' : 200.0,
             'amp': amp,
             'verb': 1,
             'noise': amp / snr,

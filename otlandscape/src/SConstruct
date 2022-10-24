@@ -32,8 +32,8 @@ mode_nos = [get_mode(m) for m in modes]
 ps = [{'s': 0.0}, {}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
 
 #add other param for setting nz,nx simultaneously
-n_all_z = 50
-n_all_x = 50
+n_all_z = 5
+n_all_x = 5
 
 #create z for convexity
 z = [0.2, 0.8, n_all_z]
@@ -46,86 +46,92 @@ x = [0.2, 0.8, n_all_x]
 np_factor = 10.0
 create_synthetic_data(z, x, modes, ps, np_factor)
 
-wc = lambda m : '''
-    ./${SOURCES[4]} 
-    data=${SOURCES[1]} 
-    t=${SOURCES[2]} 
-    p=${SOURCES[3]}
-    bz=%.4f
-    ez=%.4f
-    bx=%.4f
-    ex=%.4f
-    zs=%d
-    xs=%d
-    mode=%s
-    '''%(z[0], z[1], x[0], x[1], z[2], x[2], m)
+keep_going = True 
 
-all_colors = '''cubeyf1 gist_earth izoaz linearlfb lb montag owb rwb seismic spectral
- viridis acton bamako batlow berlin bilbao broc brocO buda cork corkO 
- davos devon grayC hawaii imola inferno lajolla lapaz lisbon magma nuuk 
- oleron oslo plasma roma romaO tofino tokyo turku vik vikO'''.split(' ')
+if( keep_going ):
+    
+    wc = lambda m : '''
+        ./${SOURCES[4]} 
+        data=${SOURCES[1]} 
+        t=${SOURCES[2]} 
+        p=${SOURCES[3]}
+        bz=%.4f
+        ez=%.4f
+        bx=%.4f
+        ex=%.4f
+        zs=%d
+        xs=%d
+        mode=%s
+        '''%(z[0], z[1], x[0], x[1], z[2], x[2], m)
+    
+    all_colors = '''cubeyf1 gist_earth izoaz linearlfb lb montag owb rwb seismic spectral
+     viridis acton bamako batlow berlin bilbao broc brocO buda cork corkO 
+     davos devon grayC hawaii imola inferno lajolla lapaz lisbon magma nuuk 
+     oleron oslo plasma roma romaO tofino tokyo turku vik vikO'''.split(' ')
+    
+    clr='i'
+    
+    plot_cmd_tmp = 'grey color=%s scalebar=y label1=Zshift label2=Xshift'%clr
+    #plot_cmd_tmp = plot_cmd_tmp + ' maxval=1.0'
+    plot_cmd = lambda x : plot_cmd_tmp + ' title="%s" scalebar=y'%(x)
+    
+    wavz_syn = 'wavz_synthetic'
+    wavx_syn = 'wavx_synthetic'
+    wavz_syn_fourier = wavz_syn + 'fft'
+    wavx_syn_fourier = wavx_syn + 'fft'
+    
+    create_fft_plots = True
+    create_plots = True
+    
+    for (i,mode) in enumerate(modes):
+        cmd = wc(mode_nos[i]) + ' ' + dict_to_str(ps[i])
+        cmd = cmd[:-1]
+        mode_title = mode + ' ' + dict_to_str(ps[i])
+        if( mode == 'sobolev' and ps[i]['s'] == 0.0 ):
+            mode_title = 'L2'
+        p_cmd = plot_cmd(mode_title)
+        if( mode == 'sobolev' and abs(ps[i]['s']) > 0 ):
+            print('Nonzero sobolev norms not supported yet...coming soon')
+        elif( 'w2' in mode or abs(ps[i]['s']) == 0.0 ):
+            Flow('distz_%d'%i, 'wavz_shifted %s t p %s'%(wavz_syn, wass_exe), cmd)
+            Flow('distx_%d'%i, 'wavx_shifted %s t p %s'%(wavx_syn, wass_exe), cmd)
+            if( create_plots ):
+                Result('wavz_shifted', 'wavz_shifted', 
+                    '''
+                    sftransp plane=12 | 
+                    grey title="Time observations" label1=Time label2=X
+                        unit1=s unit2=km 
+                        color=%s scalebar=y'''%clr)
+                create_plots = False
+        Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
+        Flow('zconvex_%d'%i, 'fulldist_%d'%i, 
+            '''
+            window f2=0 n2=1 
+            ''')
+        Flow('xconvex_%d'%i, 'fulldist_%d'%i,
+            '''
+            window f1=%d n1=1 
+            '''%(int(n_all_z / 2)))
+    
+        Result('zconvex_%d'%i, 'zconvex_%d'%i, 'graph title="Z Convexity Test"')
+        Result('xconvex_%d'%i, 'xconvex_%d'%i, 'graph title="X Convexity Test"')
+        Result('fullgraphz_%d'%i, 'fulldist_%d'%i, 
+            '''
+            transp plane=23 |
+            graph title="%s" label1=Depth label2=Misfit
+            '''%mode_title )
+    
+        Result('fullgraphx_%d'%i, 'fulldist_%d'%i, 
+            '''
+            transp plane=13 | 
+            transp plane=12 | 
+            graph title="%s" label1=X label2=Misfit
+            '''%mode_title)
+        Result('fulldist_%d'%i, 'fulldist_%d'%i, 
+            p_cmd)
+    
+    ricker_shift(wass_exe)
 
-clr='seismic'
 
-plot_cmd_tmp = 'grey color=%s scalebar=y label1=Zshift label2=Xshift'%clr
-#plot_cmd_tmp = plot_cmd_tmp + ' maxval=1.0'
-plot_cmd = lambda x : plot_cmd_tmp + ' title="%s"'%(x)
-
-wavz_syn = 'wavz_synthetic'
-wavx_syn = 'wavx_synthetic'
-wavz_syn_fourier = wavz_syn + 'fft'
-wavx_syn_fourier = wavx_syn + 'fft'
-
-create_fft_plots = True
-create_plots = True
-
-for (i,mode) in enumerate(modes):
-    cmd = wc(mode_nos[i]) + ' ' + dict_to_str(ps[i])
-    cmd = cmd[:-1]
-    mode_title = mode + ' ' + dict_to_str(ps[i])
-    if( mode == 'sobolev' and ps[i]['s'] == 0.0 ):
-        mode_title = 'L2'
-    p_cmd = plot_cmd(mode_title)
-    if( mode == 'sobolev' and abs(ps[i]['s']) > 0 ):
-        print('Nonzero sobolev norms not supported yet...coming soon')
-    elif( 'w2' in mode or abs(ps[i]['s']) == 0.0 ):
-        Flow('distz_%d'%i, 'wavz_shifted %s t p %s'%(wavz_syn, wass_exe), cmd)
-        Flow('distx_%d'%i, 'wavx_shifted %s t p %s'%(wavx_syn, wass_exe), cmd)
-        if( create_plots ):
-            Result('wavz_shifted', 'wavz_shifted', 
-                '''
-                transp plane=12 | 
-                grey title="Time observations" label1=X label2=Time
-                    unit1=km unit2=s 
-                    color=%s'''%clr)
-            create_plots = False
-    Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
-    Flow('zconvex_%d'%i, 'fulldist_%d'%i, 
-        '''
-        window f2=0 n2=1 
-        ''')
-    Flow('xconvex_%d'%i, 'fulldist_%d'%i,
-        '''
-        window f1=%d n1=1 
-        '''%(int(n_all_z / 2)))
-
-    Result('zconvex_%d'%i, 'zconvex_%d'%i, 'graph title="Z Convexity Test"')
-    Result('xconvex_%d'%i, 'xconvex_%d'%i, 'graph title="X Convexity Test"')
-    Result('fullgraphz_%d'%i, 'fulldist_%d'%i, 
-        '''
-        transp plane=23 |
-        graph title="%s" label1=Depth label2=Misfit
-        '''%mode_title )
-
-    Result('fullgraphx_%d'%i, 'fulldist_%d'%i, 
-        '''
-        transp plane=13 | 
-        transp plane=12 | 
-        graph title="%s" label1=X label2=Misfit
-        '''%mode_title)
-    Result('fulldist_%d'%i, 'fulldist_%d'%i, 
-        p_cmd)
-
-ricker_shift(wass_exe)
 
 proj.End()

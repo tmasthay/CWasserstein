@@ -266,7 +266,8 @@ int main(int argc, char* argv[])
     /* initialization */
     for(it=0;it<nt;it++)
     {
-	a=SF_PI*fm*(it*dt-1.0/fm);a*=a;
+	//a=SF_PI*fm*(it*dt-1.0/fm);a*=a;
+        a = SF_PI*fm(it*dt); a *= a;
 	wlt[it]=amp*(1.0-2.0*a)*expf(-a);
     }
     for(ib=0;ib<nb;ib++)
