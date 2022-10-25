@@ -33,8 +33,8 @@ mode_nos = [get_mode(m) for m in modes]
 ps = [{'s': 0.0}, {}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
 
 #add other param for setting nz,nx simultaneously
-n_all_z = 0
-n_all_x = 0
+n_all_z = 2
+n_all_x = 2
 
 #create z for convexity
 z = [0.2, 0.8, n_all_z]
@@ -54,8 +54,8 @@ Flow('obsx', 'wavx_syntheticstacked',
     '''
     transp plane=12 
     ''')
-#Result('obsz', 'obsz', 'grey color=i scalebar=y title="Z observations"')
-#Result('obsx', 'obsx', 'grey color=i scalebar=y title="X observations"')
+Result('obsz', 'obsz', 'grey color=i scalebar=y title="Z observations" label1=Time unit1=s label2=ReceiverLoc unit2=km')
+Result('obsx', 'obsx', 'grey color=i scalebar=y title="X observations" label1=Time unit1=s label2=ReceiverLoc unit2=km')
 
 Result('obsz_traces', 'obsz', 
     '''
@@ -103,7 +103,7 @@ if( keep_going ):
     wavx_syn_fourier = wavx_syn + 'fft'
     
     create_fft_plots = True
-    create_plots = True
+    create_plots = False
     
     for (i,mode) in enumerate(modes):
         cmd = wc(mode_nos[i]) + ' ' + dict_to_str(ps[i])
@@ -151,6 +151,7 @@ if( keep_going ):
             '''%mode_title)
         Result('fulldist_%d'%i, 'fulldist_%d'%i, 
             p_cmd)
+        print('Wasserstein command = "%s"'%wc(0))
     
     ricker_shift(wass_exe)
 

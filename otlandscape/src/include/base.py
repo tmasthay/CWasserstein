@@ -130,7 +130,7 @@ def create_rho(args):
     return the_name, None, cmd
 
 def create_base():
-    N = 2000
+    N = 100
       
     az = 0.0
     bz = 700.0 
@@ -144,10 +144,10 @@ def create_base():
     nx = N
     dx = (bx - ax) / float(N)
     
-    nt = 8000
+    nt = 6000
     dt = 0.0071
 
-    dt = 0.015
+    dt = 0.02
 
     amp = 1.0e15
     amp = 1.0
@@ -177,7 +177,7 @@ def create_base():
             'numx_comp' : 1,
             'nsz' :  1,
             'nsx' :  1,
-            'nb' : 200,
+            'nb' : int(1.0 * N / 3),
             'fm' : 1.0,
             'amp': amp,
             'verb': 1,

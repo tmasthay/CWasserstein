@@ -10,6 +10,8 @@ using namespace std;
 
 template<class T>
 class WassSplit2 : public WassSlicer<T>{
+private:
+    int num_dists = 2;
 public:
     using WassSlicer<T>::WassSlicer;
 
@@ -41,7 +43,7 @@ protected:
 public:
     //inherit superclass constructor
     using WassSlicer<T>::WassSlicer;
-
+    
     void set_sharpness(T x) { this-> c = x; this->c_inv = 1.0 / this->c; }
 
     T renorm_op(T x, int i_dist){

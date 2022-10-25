@@ -88,6 +88,8 @@ int main(int argc, char* argv[]){
     valarray<float> t_vec(0.0, nt); t >> t_vec;
     valarray<float> p_vec(0.0, np); p >> p_vec;
 
+    fprintf(stderr, "nt = %d", nt);
+
     //compute distances
     for(int iz = 0; iz < zs; iz++){
         for(int ix = 0; ix < xs; ix++){ 

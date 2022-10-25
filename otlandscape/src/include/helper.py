@@ -87,7 +87,9 @@ def create_synthetic_data(z, x, modes, ps, np_factor=1.0):
     allx_sobolev = ''
   
     z = np.linspace(z[0], z[1], z[2])
-    x = np.linspace(x[0], x[1], x[2]) 
+    x = np.linspace(x[0], x[1], x[2])
+    z_files = ''
+    x_files = ''
     for (i,zz) in enumerate(z):
         for (j,xx) in enumerate(x):
             d.update({'sszf': 'sszf_%d_%d.rsf'%(i,j), \
@@ -98,6 +100,8 @@ def create_synthetic_data(z, x, modes, ps, np_factor=1.0):
                 'ssxf_val': xx, 'esxf_val': xx, 'numx_comp': 1, \
                 'case': 'shifted_%d_%d'%(i,j)})
             
+            z_files += 'wavz_shifted_%d_%d.rsf '%(i,j)
+            x_files += 'wavx_shifted_%d_%d.rsf '%(i,j)
             output_files, input_files, fc = forward(d) 
             Flow(output_files, input_files, fc)
             for l in output_files.split():
@@ -106,6 +110,10 @@ def create_synthetic_data(z, x, modes, ps, np_factor=1.0):
                     transp plane=12 | 
                     grey scalebar=y color=i
                     ''')
+    Flow('wavz_shifted', None, 'cat axis=3 %s'%z_files)
+    Flow('wavx_shifted', None, 'cat axis=3 %s'%x_files)
+    Result('wavz_shifted', 'wavz_shifted', 'grey color=i title="Shifted Z-comp Observations" scalebar=y')
+    Result('wavx_shifted', 'wavx_shifted', 'grey color=i title="Shifted X-comp Observations" scalebar=y')
 
 def ricker_shift(wass_exe):
     def get_ricker(f0, t0, sigma, amp, domain='input'):

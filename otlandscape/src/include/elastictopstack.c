@@ -351,12 +351,14 @@ for(jzs = 0; jzs < nsz; jzs++){
 
     int print_freq = 1000;
     float inner_start = clock();
+    float conversion_fudge = 0.1;
     for(it=0; it<nt; it++)
     {
         if( it % print_freq == 0 ){
             float inner_end = clock();
-            float seconds = (inner_end - inner_start) / CLOCKS_PER_SEC;
-            fprintf(stderr, "Time step %d, last cycle took %f seconds, clocks_per_second=%f\n", it, seconds, CLOCKS_PER_SEC);
+            float seconds = conversion_fudge * 
+                (inner_end - inner_start) / CLOCKS_PER_SEC;
+            fprintf(stderr, "Time step %d, last cycle took %f seconds\n", it, seconds, CLOCKS_PER_SEC);
             inner_start = inner_end;
         }
         for(isx = 0; isx < nxf; isx++){
