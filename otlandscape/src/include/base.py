@@ -130,7 +130,7 @@ def create_rho(args):
     return the_name, None, cmd
 
 def create_base():
-    N = 100
+    N = 2000
       
     az = 0.0
     bz = 700.0 
@@ -140,16 +140,17 @@ def create_base():
     space_between_receivers=70.0
     num_receivers = 10.0 
     ax = 0.0
-    dx = space_between_receivers / num_receivers
+    bx = space_between_receivers * num_receivers
     nx = N
-    bx = dx * nx
+    dx = (bx - ax) / float(N)
     
-    nt = 2000
+    nt = 8000
     dt = 0.0071
 
-    dt = 0.03
+    dt = 0.015
 
     amp = 1.0e15
+    amp = 1.0
     snr = amp
     
     #Check that noise is actually get added properly
@@ -176,11 +177,11 @@ def create_base():
             'numx_comp' : 1,
             'nsz' :  1,
             'nsx' :  1,
-            'nb' : 70,
-            'fm' : 200.0,
+            'nb' : 200,
+            'fm' : 1.0,
             'amp': amp,
             'verb': 1,
-            'noise': amp / snr,
+            'noise': 0.0,
             'vp_expr': '0.5 + 10*sin(x1+x2)',
             'vs_expr': '0.707 * input',
             'rho_expr': '1.0'

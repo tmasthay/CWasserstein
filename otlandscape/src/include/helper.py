@@ -85,15 +85,27 @@ def create_synthetic_data(z, x, modes, ps, np_factor=1.0):
     
     allz_sobolev = ''
     allx_sobolev = ''
-    
-    d.update({'sszf': 'sszf.rsf', 'ssxf': 'ssxf.rsf', \
-        'eszf': 'eszf.rsf', 'esxf': 'esxf.rsf', \
-        'sszf_val': z[0], 'eszf_val': z[1], 'numz_comp': z[2], \
-        'ssxf_val': x[0], 'esxf_val': x[1], 'numx_comp': x[2], \
-        'case': 'shifted'})
-    
-    output_files, input_files, fc = forward(d) 
-    Flow(output_files, input_files, fc)
+  
+    z = np.linspace(z[0], z[1], z[2])
+    x = np.linspace(x[0], x[1], x[2]) 
+    for (i,zz) in enumerate(z):
+        for (j,xx) in enumerate(x):
+            d.update({'sszf': 'sszf_%d_%d.rsf'%(i,j), \
+                'ssxf': 'ssxf_%d_%d.rsf'%(i,j), \
+                'eszf': 'eszf_%d_%d.rsf'%(i,j), \
+                'esxf': 'esxf_%d_%d.rsf'%(i,j), \
+                'sszf_val': zz, 'eszf_val': zz, 'numz_comp': 1, \
+                'ssxf_val': xx, 'esxf_val': xx, 'numx_comp': 1, \
+                'case': 'shifted_%d_%d'%(i,j)})
+            
+            output_files, input_files, fc = forward(d) 
+            Flow(output_files, input_files, fc)
+            for l in output_files.split():
+                Result(l, l,
+                    ''' 
+                    transp plane=12 | 
+                    grey scalebar=y color=i
+                    ''')
 
 def ricker_shift(wass_exe):
     def get_ricker(f0, t0, sigma, amp, domain='input'):

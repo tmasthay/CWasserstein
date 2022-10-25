@@ -8,6 +8,7 @@ from forward import forward
 import base
 from helper import *
 import os
+from subprocess import check_output as co
 proj = Project()
 
 #define libs and cflags
@@ -32,8 +33,8 @@ mode_nos = [get_mode(m) for m in modes]
 ps = [{'s': 0.0}, {}, {'c1': 1e-10}, {}, {'c1': 1e-10}, {}]
 
 #add other param for setting nz,nx simultaneously
-n_all_z = 5
-n_all_x = 5
+n_all_z = 0
+n_all_x = 0
 
 #create z for convexity
 z = [0.2, 0.8, n_all_z]
@@ -45,6 +46,27 @@ x = [0.2, 0.8, n_all_x]
 #define probability space granularity
 np_factor = 10.0
 create_synthetic_data(z, x, modes, ps, np_factor)
+Flow('obsz', 'wavz_syntheticstacked',
+    '''
+    transp plane=12 
+    ''')
+Flow('obsx', 'wavx_syntheticstacked',
+    '''
+    transp plane=12 
+    ''')
+#Result('obsz', 'obsz', 'grey color=i scalebar=y title="Z observations"')
+#Result('obsx', 'obsx', 'grey color=i scalebar=y title="X observations"')
+
+Result('obsz_traces', 'obsz', 
+    '''
+    transp plane=23 |
+    graph title="Z traces" label1="Time" unit1="s" label2="Displacement"
+    ''')
+Result('obsx_traces', 'obsx', 
+    '''
+    transp plane=23 |
+    graph title="X traces" label1="Time" unit1="s" label2="Displacement"
+    ''')
 
 keep_going = True 
 
