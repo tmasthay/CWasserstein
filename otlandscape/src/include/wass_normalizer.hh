@@ -1,12 +1,12 @@
 #ifndef WASS_NORMALIZER_H
 #define WASS_NORMALIZER_H
 
-#include "misfit.hh"
+#include "wass.hh"
 #include <iostream>
 #include <cassert>
 #include <vector>
 
-using namespace std;
+//using namespace std;
 //template<class T> using Ctn=vector<T>;
 
 
@@ -23,7 +23,7 @@ public:
     virtual T renorm_op(T x, int split);
 
     //Wass interface implementation #1
-    valarray< valarray<T> > renormalize(const &valarray<T> f){
+    valarray< valarray<T> > renormalize(const valarray<T> &f){
          //initialize output
          valarray< valarray<T> > g = valarray< valarray<T> >(
              valarray<T>(0.0, f.size()), num_splits);

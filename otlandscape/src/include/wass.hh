@@ -65,7 +65,7 @@ public:
     }
     
     //quantile function 
-            valarray<T> quantile(const valarray<T> &F){
+    valarray<T> quantile(const valarray<T> &F){
          //precondition error checking
          assert( F.size() == nt );
     
@@ -80,7 +80,7 @@ public:
                  if( F[i_t] <= p[i_p] and p[i_p] <= F[i_t+1] ){
                      T df = F[i_t+1] - F[i_t];
                      if( df < eps ){
-                         //left bin -- division might cause problems
+                         //left bin -- division may cause problems
                          Q[i_p] = t[i_t];
                      }
                      else{ //else interpolate between left and right
@@ -124,9 +124,7 @@ public:
            data_ren = renormalize(data);
            init_ren = true;
        }
-
-       
-       //sanity check dimensions
+       //sanity icheck dimensions
        assert(m_ren.size() == data_ren.size());
 
        //num probability densities 
@@ -153,6 +151,7 @@ public:
            }
        }
     return sum;
+    }
 };
 
 #endif
