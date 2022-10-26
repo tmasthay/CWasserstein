@@ -108,7 +108,7 @@ for m in modes:
         'proper_shifted proper_refz t p %s'%wasstrace[0],
         '''
         ./${SOURCES[4]}
-        g=${SOURCES[1]}
+        data=${SOURCES[1]}
         t=${SOURCES[2]}
         p=${SOURCES[3]}
         mode=%d

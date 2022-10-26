@@ -23,7 +23,7 @@ float wasstrace(const valarray<float> &f,
     else if( mode >= 1 ){
        if( mode == 1 ){
            WassSplit<float> my_misfit(g, t, p);
-           my_misfit.set_dists(2);
+           my_misfit.set_num_splits(2);
            value = my_misfit.eval(f);
        }
        else if( mode == 2 ){

@@ -133,7 +133,7 @@ public:
        if( not init_quantile ){
            init_quantile=true;
            //come back and implement so that it's not redundant
-           quantile_var = quantile_multi(data);
+           quantile_var = quantile_multi(data_ren);
        }
 
        valarray< valarray<T> > q = quantile_multi(m_ren);
@@ -145,8 +145,8 @@ public:
        for(int i = 0; i < q.size(); i++){
            for(int i_p = 0; i_p < np - 1; i_p++){
                T dp = p[i_p+1] - p[i_p];
-               T dqr = quantile_var[i_p+1] - q[i_p+1];
-               T dql = quantile_var[i_p] - q[i_p];
+               T dqr = quantile_var[i][i_p+1] - q[i][i_p+1];
+               T dql = quantile_var[i][i_p] - q[i][i_p];
                sum += 0.5 * dp * (dqr*dqr + dql*dql);
            }
        }

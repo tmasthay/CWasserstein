@@ -20,7 +20,7 @@ public:
     void set_num_splits(const int &x) { num_splits = x; };
 
     //Define WassNormalizer Interface
-    virtual T renorm_op(T x, int split);
+    virtual T renorm_op(T x, int split) = 0;
 
     //Wass interface implementation #1
     valarray< valarray<T> > renormalize(const valarray<T> &f){

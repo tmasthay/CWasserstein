@@ -49,6 +49,8 @@ int main(int argc, char* argv[]){
     sf_file output_file;
     output_file = sf_output("out");
     sf_putint(output_file, "n1", nx);
+    sf_putint(output_file, "n2", 1);
+    sf_putint(output_file, "n3", 1);
 
     valarray<float> t_vec(0.0, nt); t >> t_vec;
     valarray<float> p_vec(0.0, np); p >> p_vec;
@@ -57,7 +59,7 @@ int main(int argc, char* argv[]){
         valarray<float> g_vec(0.0, nt); g >> g_vec;
         valarray<float> f_vec(0.0, nt); f >> f_vec;
         //read in reference data
-        vals[i] = wasstrace<float>(f_vec, g_vec, t_vec, p_vec, mode, c);
+        vals[i] = wasstrace(f_vec, g_vec, t_vec, p_vec, mode, c);
     }
  
     //vals[0] = value;
