@@ -28,7 +28,7 @@ protected:
 public:
     Wass(const &valarray<T> data, 
         const &valarray<T> t, 
-        const &valarray<T> p, 
+        const &valarray<T> p){ 
         //set container class vars
         this->data = data;
         this->t = t;
@@ -38,6 +38,10 @@ public:
         this->nt = t.size();
         this->np = p.size();
     }
+
+    //pure virtual function
+    virtual valarray< valarray<T> > renormalize(const &valarray<T> f) = 0;
+
     valarray<T> cdf(const &valarray<T> f){
         //precondition error checking
         assert( f.size() == t.size() );
