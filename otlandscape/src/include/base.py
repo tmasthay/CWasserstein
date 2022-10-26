@@ -130,7 +130,7 @@ def create_rho(args):
     return the_name, None, cmd
 
 def create_base():
-    N = 100
+    N = 2000
       
     az = 0.0
     bz = 700.0 
@@ -177,7 +177,7 @@ def create_base():
             'numx_comp' : 1,
             'nsz' :  1,
             'nsx' :  1,
-            'nb' : int(1.0 * N / 3),
+            'nb' : int(0.2 * N),
             'fm' : 1.0,
             'amp': amp,
             'verb': 1,
