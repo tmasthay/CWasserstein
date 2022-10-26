@@ -1,6 +1,5 @@
 #include "include/cub.hh"
 #include "include/wassall.hh"
-#include "include/sobolev.hh"
 #include <vector>
 #include <valarray>
 #include <iostream>
@@ -8,13 +7,12 @@
 #include <rsf.h>
 
 
-template<typename T>
-T wasstrace(const valarray<T> &f,
-    const valarray<T> &g, 
-    const valarray<T> &t,
-    const valarray<T> &p,
+float wasstrace(const valarray<float> &f,
+    const valarray<float> &g, 
+    const valarray<float> &t,
+    const valarray<float> &p,
     int mode,
-    T c=1.0){
+    float c=1.0){
 
     //compute distances
     float value = 0.0;
@@ -24,25 +22,26 @@ T wasstrace(const valarray<T> &f,
     }
     else if( mode >= 1 ){
        if( mode == 1 ){
-           WassSplit2<float> my_misfit(g, t, p, 1);
+           WassSplit<float> my_misfit(g, t, p);
            my_misfit.set_dists(2);
            value = my_misfit.eval(f);
        }
        else if( mode == 2 ){
-           WassSquare<float> my_misfit(g, t, p, 1);
+           WassSquare<float> my_misfit(g, t, p);
            value = my_misfit.eval(f);
        }
        else if( mode == 3 ){
-           WassLinExp<float> my_misfit(g, t, p, 1);
+           WassLinExp<float> my_misfit(g, t, p);
            my_misfit.set_sharpness(c);
            value = my_misfit.eval(f);
        }
        else if( mode == 4 ){
-           WassLin<float> my_misfit(g, t, p, nx);
-           value = my_misfit.eval(f);
+           //WassLin<float> my_misfit(g, t, p, 1);
+           //value = my_misfit.eval(f);
+           value = 0.0;
        }
        else if( mode == 5 ){
-           WassExp<float> my_misfit(g, t, p, nx);
+           WassExp<float> my_misfit(g, t, p);
            value = my_misfit.eval(f);
        }
        else{

@@ -6,7 +6,6 @@
 #include <cassert>
 #include <vector>
 
-using namespace std;
 //template<class T> using Ctn=vector<T>;
 
 
@@ -26,9 +25,9 @@ protected:
     bool init_ren=false;
     bool init_quantile=false;
 public:
-    Wass(const &valarray<T> data, 
-        const &valarray<T> t, 
-        const &valarray<T> p){ 
+    Wass<T>(const valarray<T> &data, 
+        const valarray<T> &t, 
+        const valarray<T> &p){ 
         //set container class vars
         this->data = data;
         this->t = t;
@@ -40,9 +39,9 @@ public:
     }
 
     //pure virtual function
-    virtual valarray< valarray<T> > renormalize(const &valarray<T> f) = 0;
+    virtual valarray< valarray<T> > renormalize(const valarray<T> &f) = 0;
 
-    valarray<T> cdf(const &valarray<T> f){
+    valarray<T> cdf(const valarray<T> &f){
         //precondition error checking
         assert( f.size() == t.size() );
 
@@ -66,7 +65,7 @@ public:
     }
     
     //quantile function 
-    valarray<T> quantile(const &valarray<T> F){
+            valarray<T> quantile(const valarray<T> &F){
          //precondition error checking
          assert( F.size() == nt );
     
@@ -98,7 +97,7 @@ public:
     }
  
     valarray< valarray<T> > cdf_multi(
-        const &valarray< valarray<T> >){
+        const valarray< valarray<T> > &f){
         valarray< valarray<T> > F = valarray< valarray<T> >(f);
         for(int i = 0; i < F.size(); i++){
             F[i] = cdf(f[i]);
@@ -107,7 +106,7 @@ public:
     }
 
     valarray< valarray<T> > quantile_multi(
-        const &valarray< valarray<T> >){
+        const valarray< valarray<T> > &f){
         valarray< valarray<T> > F = valarray< valarray<T> >(f);
         for(int i = 0; i < F.size(); i++){
             F[i] = quantile(f[i]);

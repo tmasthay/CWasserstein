@@ -1,12 +1,12 @@
 #ifndef WASS_ALL_H
 #define WASS_ALL_H
 
-#include "wass.hh"
+#include "wass_normalizer.hh"
 #include <vector>
 #include <cassert>
 
-using namespace std;
 //template<class T> using Ctn=vector<T>;
+using namespace std;
 
 template<class T>
 class WassSplit : public WassNormalizer<T>{
@@ -34,7 +34,6 @@ public:
     }
 };
 
-using namespace std;
 //template<class T> using Ctn=vector<T>;
 
 template<class T>

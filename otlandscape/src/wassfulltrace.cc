@@ -1,13 +1,11 @@
 #include "include/cub.hh"
 #include "include/wassall.hh"
-#include "include/sobolev.hh"
-#include "wasstrace.cc"
+#include "wasstrace.hh"
 #include <vector>
 #include <valarray>
 #include <iostream>
 #include <cassert>
 #include <rsf.h>
-
 
 int main(int argc, char* argv[]){    
     sf_init(argc, argv);
@@ -21,7 +19,7 @@ int main(int argc, char* argv[]){
     CUB p("p", "i"); p.headin(); //p.report();
 
     int verbose, mode;
-    float c;
+    T c;
     if(!sf_getint("v", &verbose)) verbose = 0; 
     if(!sf_getint("mode", &mode)) mode = 0;
     if(!sf_getfloat("c", &c)) c = 1.0;
@@ -59,9 +57,9 @@ int main(int argc, char* argv[]){
     valarray<T> p_vec(0.0, np); p >> p_vec;
 
     for(int i = 0; i < nx; i++){
-        //read in reference data
         valarray<T> g_vec(0.0, nt); g >> g_vec;
         valarray<T> f_vec(0.0, nt); f >> f_vec;
+        //read in reference data
         vals[i] = wasstrace<T>(f_vec, g_vec, t_vec, p_vec, mode, c);
     }
  
