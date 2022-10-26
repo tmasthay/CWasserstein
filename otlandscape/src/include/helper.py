@@ -6,7 +6,16 @@ from subprocess import check_output as co
 from rsf.proj import *
 import re
 import base
-     
+
+def get_dims(file_name):
+    file_name = file_name.replace('.rsf', '')
+    d = dict()
+    pairs = [e.split('=') for e in re.findall('n[0-9]=.*',
+        co('cat %s.rsf'%file_name, shell=True).decode('utf-8'))]
+    for p in pairs:
+        d[p[0]] = p[1]
+    return d 
+
 def attach(s, suf):
     t = re.sub('[0-9]*', '', s)
     return s[:len(t)] + suf + s[len(t):]

@@ -2,6 +2,7 @@ from rsf.proj import *
 import numpy as np
 import copy
 import sys
+from subprocess import check_output as co
 sys.path.append('./include')
 
 from forward import forward
@@ -9,6 +10,7 @@ import base
 from helper import *
 import os
 from subprocess import check_output as co
+import re
 proj = Project()
 
 #define libs and cflags
@@ -70,8 +72,8 @@ Result('obsx', 'wavx_syntheticstacked',
 Flow('wavz_shifted_t', 'wavz_shifted', 'transp plane=12 | transp plane=23')
 Flow('wavx_shifted_t', 'wavx_shifted', 'transp plane=12 | transp plane=23')
 
-take_first = 1
-take_first = 1 + min(take_first, n_all_x*n_all_z)
+take_first = 5
+take_first = 1 + max(1, min(take_first, n_all_x*n_all_z))
 
 Result('obsz_traces', 'refcpyz wavz_shifted_t', 
     '''
@@ -86,4 +88,33 @@ Result('obsx_traces', 'refcpyx wavx_shifted_t',
     graph title="X traces" label1="Time" unit1="s" label2="Displacement"
     '''%take_first)
 
+wasstrace = proj.Program('wassfulltrace.cc')
+
+Flow('proper_shifted', 'wavz_shifted_t', 
+    '''
+    transp plane=23 | 
+    window f3=0 n3=1
+    ''')
+
+Flow('proper_refz', 'refcpyz',
+    '''
+    transp plane=23 | 
+    window f3=0 n3=1
+    ''')
+
+modes = [0,1]
+for m in modes:
+    Flow('wassz%d'%m, 
+        'proper_shifted proper_refz t p %s'%wasstrace[0],
+        '''
+        ./${SOURCES[4]}
+        g=${SOURCES[1]}
+        t=${SOURCES[2]}
+        p=${SOURCES[3]}
+        mode=%d
+        '''%m)
+   
+    Result('wassz%d'%m, 'wassz%d'%m, 
+        'graph title="W2 mode=%d" scalebar=y'%m)
+ 
 proj.End()
