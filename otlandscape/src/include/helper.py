@@ -64,7 +64,7 @@ def create_reference_data():
     
     return output_files, input_files, fc, d
  
-def create_synthetic_data(z, x, modes, ps, np_factor=1.0):
+def create_synthetic_data(z, x, np_factor=1.0):
     w2_created = False
     sobolev_created = False
     

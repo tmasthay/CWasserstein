@@ -23,8 +23,6 @@ proj.Replace(CCFLAGS=cflags)
 #elas = proj.Program('./include/myelastic.cc')
 #elas = proj.Program('./include/elastictop.c')
 elas = proj.Program('./include/elastictopstack.c')
-driv = proj.Program('driver.cc')
-wass_exe = str(driv[0])
 
 modes = ['sobolev', 'w2split', 'w2linexp', 'w2square', 'w2exp', 'w2linear']
 
@@ -45,116 +43,47 @@ x = [0.2, 0.8, n_all_x]
 
 #define probability space granularity
 np_factor = 10.0
-create_synthetic_data(z, x, modes, ps, np_factor)
-Flow('obsz', 'wavz_syntheticstacked',
+create_synthetic_data(z, x, np_factor)
+Flow('refcpyz', 'wavz_syntheticstacked',
     '''
-    transp plane=12 
+    transp plane=12 | transp plane=23
     ''')
-Flow('obsx', 'wavx_syntheticstacked',
+Flow('refcpyx', 'wavx_syntheticstacked',
     '''
-    transp plane=12 
+    transp plane=12 | transp plane=23
     ''')
-Result('obsz', 'obsz', 'grey color=i scalebar=y title="Z observations" label1=Time unit1=s label2=ReceiverLoc unit2=km')
-Result('obsx', 'obsx', 'grey color=i scalebar=y title="X observations" label1=Time unit1=s label2=ReceiverLoc unit2=km')
 
-Result('obsz_traces', 'obsz', 
+Result('obsz', 'wavz_syntheticstacked', 
     '''
-    transp plane=23 |
+    transp plane=12 |
+    grey color=i scalebar=y title="Z observations" 
+        label1=Time unit1=s label2=ReceiverLoc unit2=km
+    ''')
+Result('obsx', 'wavx_syntheticstacked', 
+    '''
+    transp plane=12 | 
+    grey color=i scalebar=y title="X observations" 
+        label1=Time unit1=s label2=ReceiverLoc unit2=km
+    ''')
+
+
+Flow('wavz_shifted_t', 'wavz_shifted', 'transp plane=12 | transp plane=23')
+Flow('wavx_shifted_t', 'wavx_shifted', 'transp plane=12 | transp plane=23')
+
+take_first = 1
+take_first = 1 + min(take_first, n_all_x*n_all_z)
+
+Result('obsz_traces', 'refcpyz wavz_shifted_t', 
+    '''
+    cat ${SOURCES[1]} axis=2 |
+    window f2=0 n2=%d |
     graph title="Z traces" label1="Time" unit1="s" label2="Displacement"
-    ''')
-Result('obsx_traces', 'obsx', 
+    '''%take_first)
+Result('obsx_traces', 'refcpyx wavx_shifted_t', 
     '''
-    transp plane=23 |
+    cat ${SOURCES[1]} axis=2 |
+    window f2=0 n2=%d |
     graph title="X traces" label1="Time" unit1="s" label2="Displacement"
-    ''')
-
-keep_going = True 
-
-if( keep_going ):
-    
-    wc = lambda m : '''
-        ./${SOURCES[4]} 
-        data=${SOURCES[1]} 
-        t=${SOURCES[2]} 
-        p=${SOURCES[3]}
-        bz=%.4f
-        ez=%.4f
-        bx=%.4f
-        ex=%.4f
-        zs=%d
-        xs=%d
-        mode=%s
-        '''%(z[0], z[1], x[0], x[1], z[2], x[2], m)
-    
-    all_colors = '''cubeyf1 gist_earth izoaz linearlfb lb montag owb rwb seismic spectral
-     viridis acton bamako batlow berlin bilbao broc brocO buda cork corkO 
-     davos devon grayC hawaii imola inferno lajolla lapaz lisbon magma nuuk 
-     oleron oslo plasma roma romaO tofino tokyo turku vik vikO'''.split(' ')
-    
-    clr='i'
-    
-    plot_cmd_tmp = 'grey color=%s scalebar=y label1=Zshift label2=Xshift'%clr
-    #plot_cmd_tmp = plot_cmd_tmp + ' maxval=1.0'
-    plot_cmd = lambda x : plot_cmd_tmp + ' title="%s" scalebar=y'%(x)
-    
-    wavz_syn = 'wavz_synthetic'
-    wavx_syn = 'wavx_synthetic'
-    wavz_syn_fourier = wavz_syn + 'fft'
-    wavx_syn_fourier = wavx_syn + 'fft'
-    
-    create_fft_plots = True
-    create_plots = False
-    
-    for (i,mode) in enumerate(modes):
-        cmd = wc(mode_nos[i]) + ' ' + dict_to_str(ps[i])
-        cmd = cmd[:-1]
-        mode_title = mode + ' ' + dict_to_str(ps[i])
-        if( mode == 'sobolev' and ps[i]['s'] == 0.0 ):
-            mode_title = 'L2'
-        p_cmd = plot_cmd(mode_title)
-        if( mode == 'sobolev' and abs(ps[i]['s']) > 0 ):
-            print('Nonzero sobolev norms not supported yet...coming soon')
-        elif( 'w2' in mode or abs(ps[i]['s']) == 0.0 ):
-            Flow('distz_%d'%i, 'wavz_shifted %s t p %s'%(wavz_syn, wass_exe), cmd)
-            Flow('distx_%d'%i, 'wavx_shifted %s t p %s'%(wavx_syn, wass_exe), cmd)
-            if( create_plots ):
-                Result('wavz_shifted', 'wavz_shifted', 
-                    '''
-                    sftransp plane=12 | 
-                    grey title="Time observations" label1=Time label2=X
-                        unit1=s unit2=km 
-                        color=%s scalebar=y'''%clr)
-                create_plots = False
-        Flow('fulldist_%d'%i, 'distz_%d distx_%d'%(i,i), 'add ${SOURCES[1]}')
-        Flow('zconvex_%d'%i, 'fulldist_%d'%i, 
-            '''
-            window f2=0 n2=1 
-            ''')
-        Flow('xconvex_%d'%i, 'fulldist_%d'%i,
-            '''
-            window f1=%d n1=1 
-            '''%(int(n_all_z / 2)))
-    
-        Result('zconvex_%d'%i, 'zconvex_%d'%i, 'graph title="Z Convexity Test"')
-        Result('xconvex_%d'%i, 'xconvex_%d'%i, 'graph title="X Convexity Test"')
-        Result('fullgraphz_%d'%i, 'fulldist_%d'%i, 
-            '''
-            transp plane=23 |
-            graph title="%s" label1=Depth label2=Misfit
-            '''%mode_title )
-    
-        Result('fullgraphx_%d'%i, 'fulldist_%d'%i, 
-            '''
-            transp plane=13 | 
-            transp plane=12 | 
-            graph title="%s" label1=X label2=Misfit
-            '''%mode_title)
-        Result('fulldist_%d'%i, 'fulldist_%d'%i, 
-            p_cmd)
-        print('Wasserstein command = "%s"'%wc(0))
-    
-    ricker_shift(wass_exe)
-
-
+    '''%take_first)
 
 proj.End()
