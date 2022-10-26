@@ -52,7 +52,7 @@ Flow('refcpyz', 'wavz_syntheticstacked',
     ''')
 Flow('refcpyx', 'wavx_syntheticstacked',
     '''
-    transp plane=12 | transp plane=23
+    transp plane=12 | transp plane=23:
     ''')
 
 Result('obsz', 'wavz_syntheticstacked', 
@@ -88,12 +88,12 @@ Result('obsx_traces', 'refcpyx wavx_shifted_t',
     graph title="X traces" label1="Time" unit1="s" label2="Displacement"
     '''%take_first)
 
-wasstrace = proj.Program('wassfulltrace.cc')
+prog_name = 'wasstt.cc'
+wasstrace = proj.Program(prog_name)
 
 Flow('proper_shifted', 'wavz_shifted_t', 
     '''
-    transp plane=23 | 
-    window f3=0 n3=1
+    transp plane=23 
     ''')
 
 Flow('proper_refz', 'refcpyz',
@@ -102,10 +102,12 @@ Flow('proper_refz', 'refcpyz',
     window f3=0 n3=1
     ''')
 
+Flow('alltest', 'wavz_shifted', 'transp plane=12')
+
 modes = [0,1]
 for m in modes:
     Flow('wassz%d'%m, 
-        'proper_shifted proper_refz t p %s'%wasstrace[0],
+        'alltest proper_refz t p %s'%wasstrace[0],
         '''
         ./${SOURCES[4]}
         data=${SOURCES[1]}
