@@ -14,9 +14,9 @@ float wasstrace(const valarray<float> &f,
     int mode,
     float c=1.0){
 
-    fprintf(stderr, 
-        " CALLING WASSTRACE (%d,%d,%d,%d) ",
-        f.size(), g.size(), t.size(), p.size());
+    // fprintf(stderr, 
+    //     " CALLING WASSTRACE (%d,%d,%d,%d) ",
+    //     f.size(), g.size(), t.size(), p.size());
     //compute distances
     float value = 0.0;
     if( mode == 0 ){
@@ -56,6 +56,6 @@ float wasstrace(const valarray<float> &f,
        cerr << "Mode " << mode << " not supported in wasstrace.cc\n";
        exit(-2);
     }
-    fprintf(stderr, " RETURNING %f ", value);
+    // fprintf(stderr, " RETURNING %f ", value);
     return value;
 }

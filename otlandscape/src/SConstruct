@@ -45,14 +45,14 @@ x = [0.2, 0.8, n_all_x]
 
 #define probability space granularity
 np_factor = 10.0
-create_synthetic_data(z, x, np_factor)
+d = create_synthetic_data(z, x, np_factor)
 Flow('refcpyz', 'wavz_syntheticstacked',
     '''
     transp plane=12 | transp plane=23
     ''')
 Flow('refcpyx', 'wavx_syntheticstacked',
     '''
-    transp plane=12 | transp plane=23:
+    transp plane=12 | transp plane=23
     ''')
 
 Result('obsz', 'wavz_syntheticstacked', 
@@ -91,6 +91,32 @@ Result('obsx_traces', 'refcpyx wavx_shifted_t',
 prog_name = 'wasstt.cc'
 wasstrace = proj.Program(prog_name)
 
+Flow('gaussref', None,
+    '''
+    math output="exp(-x1*x1/2)"
+        n1=10000 d1=0.001 o1=0.0
+        n2=100 d2=0.01 o2=0.0 
+    ''')
+
+Flow('shifter', None,
+    '''
+    math output="exp(-(x1-x2)*(x1-x2)/(2*x3*x3))"
+        n1=10000 d1=0.001 o1=0.0
+        n2=100 d2=0.01 o2=0.0
+        n3=100 d3=0.01 o3=1.0 
+    ''')
+
+Flow('gausstest', 'shifter gaussref t p %s'%wasstrace[0],
+    '''
+    ./${SOURCES[4]}
+    data=${SOURCES[1]}
+    t=${SOURCES[2]}
+    p=${SOURCES[3]}
+    mode=1
+    ''')
+
+Plot('gausstest', 'gausstest', 'grey scalebar=y')
+
 Flow('proper_shifted', 'wavz_shifted_t', 
     '''
     transp plane=23 
@@ -117,6 +143,19 @@ for m in modes:
         '''%m)
    
     Result('wassz%d'%m, 'wassz%d'%m, 
-        'graph title="W2 mode=%d" scalebar=y'%m)
+        '''
+        put n1=%d d1=%.16f o1=%.16f
+            d2=%.16f o2=%.16f n2=%d 
+            d3=%.16f o3=%.16f n3=%d 
+            label2=srcXLoc unit2=km
+            label3=srcZLoc unit3=km | 
+        grey label1="ReceiverLoc" unit1=km
+            title="Misfit mode=%d"
+            color=seismic
+            scalebar=y
+        '''%(d['nx'], d['dx'], d['ox'],
+            (x[1]-x[0]) * d['dx'], (1 + x[0])*d['ox'], x[2],
+            (z[1]-z[0]) * d['dz'], (1+z[0])*d['oz'], z[2],
+            m))
  
 proj.End()

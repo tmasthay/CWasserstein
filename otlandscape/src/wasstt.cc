@@ -9,13 +9,11 @@
 int main(int argc, char* argv[]){    
     sf_init(argc, argv);
 
-    fprintf(stderr, "yo\n");
     //setup I/O files
     CUB f("in", "i"); f.headin(); //f.report();
     CUB g("data", "i"); g.headin(); //g.report);
     CUB t("t", "i"); t.headin(); //t.report();
     CUB p("p", "i"); p.headin(); //p.report();
-    fprintf(stderr, "DATA READ IN SUCCESSFULLY\n");
 
     int verbose, mode;
     float c;
@@ -55,7 +53,7 @@ int main(int argc, char* argv[]){
     //float** vals;
     //vals = sf_floatalloc2(zs, xs);
     float** vals;
-    vals = sf_floatalloc2(nx,nz);
+    vals = sf_floatalloc2(nx, nz);
     sf_file output_file;
     output_file = sf_output("out");
     sf_putint(output_file, "n1", nx);
@@ -70,17 +68,22 @@ int main(int argc, char* argv[]){
 
     int curr = 0;
     for(int i = 0; i < nx; i++){
-        f >> f_vec;
+        g >> g_vec;
         for(int j = 0; j < nz; j++){
-            g >> g_vec;
+            f >> f_vec;
             curr += nt;
-            fprintf(stderr, "(%d,%d) = ", i, j);
             //read in reference data
-            vals[i][j] = wasstrace(f_vec, g_vec, t_vec, p_vec, mode, c);
-            fprintf(stderr, "%f\n", vals[i][j]);
+            float curr_val = wasstrace(f_vec, g_vec, t_vec,
+                p_vec, mode, c);
+            vals[j][i] = curr_val;
+            //fprintf(stderr, "(%d,%d)\n", curr, nx*nt*nz);
         }
-        sf_floatwrite(vals[i], nz, output_file);
     }
+
+    for(int j = 0; j < nz; j++){
+        sf_floatwrite(vals[j], nx, output_file);
+    }
+            
     free(*vals);
     free(vals);
     exit(0);

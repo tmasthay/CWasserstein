@@ -130,24 +130,26 @@ def create_rho(args):
     return the_name, None, cmd
 
 def create_base():
-    N = 2000
+    N = 1000
       
     az = 0.0
-    bz = 700.0 
+    bz = 50.0 
     nz = N
-    dz = (bz-az) / nz
+    dz = (bz-az) / float(nz)
    
-    space_between_receivers=70.0
-    num_receivers = 10.0 
-    ax = 0.0
-    bx = space_between_receivers * num_receivers
+    # space_between_receivers=10.0
+    # num_receivers = 10.0 
+    # ax = 0.0
+    # bx = space_between_receivers * num_receivers
+    ax = az
+    bx = bz
     nx = N
-    dx = (bx - ax) / float(N)
+    dx = (bx - ax) / float(nx)
     
-    nt = 6000
+    nt = 10000
     dt = 0.0071
 
-    dt = 0.02
+    dt = 0.001
 
     amp = 1.0e15
     amp = 1.0

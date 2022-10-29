@@ -123,6 +123,7 @@ def create_synthetic_data(z, x, np_factor=1.0):
     Flow('wavx_shifted', None, 'cat axis=3 %s'%x_files)
     Result('wavz_shifted', 'wavz_shifted', 'grey color=i title="Shifted Z-comp Observations" scalebar=y')
     Result('wavx_shifted', 'wavx_shifted', 'grey color=i title="Shifted X-comp Observations" scalebar=y')
+    return d
 
 def ricker_shift(wass_exe):
     def get_ricker(f0, t0, sigma, amp, domain='input'):
