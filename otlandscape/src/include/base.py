@@ -130,7 +130,7 @@ def create_rho(args):
     return the_name, None, cmd
 
 def create_base():
-    N = 2000
+    N = 100
       
     az = 0.0
     bz = 700.0 

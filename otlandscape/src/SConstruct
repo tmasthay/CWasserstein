@@ -91,32 +91,6 @@ Result('obsx_traces', 'refcpyx wavx_shifted_t',
 prog_name = 'wasstt.cc'
 wasstrace = proj.Program(prog_name)
 
-Flow('gaussref', None,
-    '''
-    math output="exp(-x1*x1/2)"
-        n1=10000 d1=0.001 o1=0.0
-        n2=100 d2=0.01 o2=0.0 
-    ''')
-
-Flow('shifter', None,
-    '''
-    math output="exp(-(x1-x2)*(x1-x2)/(2*x3*x3))"
-        n1=10000 d1=0.001 o1=0.0
-        n2=100 d2=0.01 o2=0.0
-        n3=100 d3=0.01 o3=1.0 
-    ''')
-
-Flow('gausstest', 'shifter gaussref t p %s'%wasstrace[0],
-    '''
-    ./${SOURCES[4]}
-    data=${SOURCES[1]}
-    t=${SOURCES[2]}
-    p=${SOURCES[3]}
-    mode=1
-    ''')
-
-Plot('gausstest', 'gausstest', 'grey scalebar=y')
-
 Flow('proper_shifted', 'wavz_shifted_t', 
     '''
     transp plane=23 
