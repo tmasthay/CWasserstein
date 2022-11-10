@@ -125,11 +125,22 @@ for m in modes:
             label3=srcZLoc unit3=km | 
         grey label1="ReceiverLoc" unit1=km
             title="Misfit mode=%d"
-            color=seismic
+            color=viridis
             scalebar=y
         '''%(d['nx'], d['dx'], d['ox'],
-            (x[1]-x[0]) * d['dx'], (1 + x[0])*d['ox'], x[2],
-            (z[1]-z[0]) * d['dz'], (1+z[0])*d['oz'], z[2],
+            (x[1]-x[0]) / x[2], x[0], x[2],
+            (z[1]-z[0]) / z[2], z[0], z[2],
             m))
+
+    tau = 0.0
+    Flow('wasszstack%d'%m, 'wassz%d'%m, 
+        '''
+        math output="%f + input" | 
+        stack axis=1 | 
+        put n1=%d n2=%d
+            d1=%f d2=%f
+            o1=%f o2=%f 
+        '''%(tau, z[2], x[2], (z[1]-z[0]) / z[2], (x[1]-x[2]) / x[2], z[0], x[0]))
+    Result('wasszstack%d'%m, 'wasszstack%d'%m, 'grey scalebar=y')
  
 proj.End()

@@ -22,6 +22,20 @@ public:
 };
 
 template<class T>
+class WassShift : public WassNormalizer<T>{
+private:
+   int num_dists = 1;
+   float c = 100.0;
+public:
+    //inherit superclass constructor
+    using WassNormalizer<T>::WassNormalizer;
+
+    T renorm_op(T x, int i_dist){
+        return x + c;
+    }
+};
+
+template<class T>
 class WassSquare : public WassNormalizer<T>{
 private:
    int num_dists = 1;

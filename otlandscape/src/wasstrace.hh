@@ -30,7 +30,7 @@ float wasstrace(const valarray<float> &f,
            value = my_misfit.eval(f);
        }
        else if( mode == 2 ){
-           WassSquare<float> my_misfit(g, t, p);
+           WassShift<float> my_misfit(g, t, p);
            value = my_misfit.eval(f);
        }
        else if( mode == 3 ){

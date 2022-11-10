@@ -349,7 +349,7 @@ for(jzs = 0; jzs < nsz; jzs++){
     memset(txz[0],0,nzpad*nxpad*sizeof(float));
 
 
-    int print_freq = 1000;
+    int print_freq = 100;
     float inner_start = clock();
     float conversion_fudge = 0.1;
     for(it=0; it<nt; it++)

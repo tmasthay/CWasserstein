@@ -42,7 +42,7 @@ def create_vp(args):
     layer_vals = cfl * np.array([6.0, 8.0  , 8.5  , 9.3  , 9.8  , 10.0 , 11.0, 11.8])
     layer_ends = [5.0, 250.0, 450.0, 500.0, 520.0, 575.0, 625.0]
 
-    layer_vals = [6.0]
+    layer_vals = [1.0 / 10.0]
     layer_ends = []
     
     cmd = 'sfmath output="%.8f'%(layer_vals[0])
@@ -89,7 +89,7 @@ def create_vs(args):
     layer_vals = cfl * np.array([3.75, 4.3, 4.6, 5.0, 5.25, 5.5, 6.0, 6.15, 6.3])
     layer_ends = [5.0, 250.0, 450.0, 500.0, 520.0, 575.0, 625.0]
    
-    layer_vals = [6.0*0.707]
+    layer_vals = [0.707 / 10.0]
     layer_ends = []
     cmd = 'sfmath output="%.8f'%(layer_vals[0])
     for i in range(len(layer_ends)):
@@ -133,7 +133,7 @@ def create_base():
     N = 100
       
     az = 0.0
-    bz = 700.0 
+    bz = 1.0 
     nz = N
     dz = (bz-az) / float(nz)
    
@@ -146,10 +146,10 @@ def create_base():
     nx = N
     dx = (bx - ax) / float(nx)
     
-    nt = 6000
+    nt = 500
     dt = 0.0071
 
-    dt = 0.02
+    dt = 0.04
 
     amp = 1.0e15
     amp = 1.0
